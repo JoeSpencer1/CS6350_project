@@ -14,7 +14,7 @@ import tensorflow as tf
 tf.config.run_functions_eagerly(False)
 import os
 import multiprocessing
-dde.backend.set_default_backend("tensorflow.compat.v1")
+dde.backend.set_default_backend('tensorflow.compat.v1')
 dde.backend.tf.Session()
 
 global apeG, yG
@@ -282,7 +282,7 @@ def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
     y = []
     
     for _ in range(10):
-        print("\nIteration: {}".format(len(ape)))
+        print('\nIteration: {}'.format(len(ape)))
 
         data = dde.data.MfDataSet(
             X_lo_train=datalow.X,

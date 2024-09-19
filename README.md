@@ -9,3 +9,6 @@ This repository contains our project for CS 6350 at the University of Utah. Data
 
 ## Files
 Code files are located in the src folder, and data files are located in the data folder.
+
+## Requirements
+Listed in `requirements.txt`
