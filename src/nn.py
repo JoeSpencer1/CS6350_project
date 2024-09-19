@@ -8,6 +8,8 @@ import numpy as np
 from sklearn.svm import SVR
 from sklearn.model_selection import KFold, LeaveOneOut, RepeatedKFold, ShuffleSplit, StratifiedKFold
 
+import os
+os.environ['DDEBACKEND'] = 'tensorflow.compat.v1'
 import deepxde as dde
 from data import FileData
 import tensorflow as tf
@@ -270,8 +272,8 @@ def validation_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow
 
     with open('output.txt', 'a') as f:
         f.write('validation_three ' + yname + ' ' + f'{np.mean(ape, axis=0)[0]:.2f}' + ' ' + f'{np.std(ape, axis=0)[0]:.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainexp) + ' ' + str(n_exp) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + typ + ' ' + str(n_vd) + ' ' + str(v_hi) + ' ' + str(v_lo) + ' ' + str(lay) + ' ' + str(wid) + '\n')
-    print('Saved to ', yname, '.dat.')
-    np.savetxt(yname + '.dat', np.hstack(y).T)  
+    # print('Saved to ', yname, '.dat.')
+    # np.savetxt(yname + '.dat', np.hstack(y).T)  
 
 def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
     datalow = FileData(train_lo, yname)
