@@ -16,3 +16,9 @@
 
 
 
+validation_two sy 31.86 4.32 Al7075 FEM_3D 12 FEM_2D 100 0 0 2 128
+validation_three sy 7.22 1.99 B3067 [B3090,B3067_60] 11 FEM_3D 14 FEM_2D 100 hi 0 0 0 2 128
+
+validation_two Er 3.31 1.70 Al7075 FEM_3D 12 FEM_2D 100 0 0 2 128
+validation_three Er 6.13 2.57 B3067 [B3090,B3067_60] 11 FEM_3D 14 FEM_2D 100 hi 0 0 0 2 128
+

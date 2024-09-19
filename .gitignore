@@ -1,3 +1,5 @@
 .DS_Store
 data/.DS_Store
 .history
+*.dat
+__pycache__
