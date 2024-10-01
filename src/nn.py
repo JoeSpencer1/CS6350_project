@@ -99,28 +99,42 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         # Generate output based on yname
         if yname == 'Er':
             # Replace these dummy functions
-            Y = np.sin(np.pi * x1) + np.cos(np.pi * x2) + x3**2 + x4**3
-        elif yname == 'sy':
-            Y = np.cos(np.pi * x1) + np.sin(np.pi * x2) + x3**3 + x4**2
-        else:
-            raise ValueError("Invalid yname. Must be 'Er' or 'sy'.")
+            Y = np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
+        if yname == 'sy':
+            Y = x1 / 73.5
         
         return X, Y.reshape(-1, 1)
 
     # Generate training data
-    X_train, y_train = gen_traindata(1000)
+    X_model, y_model = gen_traindata(1000)
 
     # Define the geometry
     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
 
     # Define the boundary condition (if applicable)
-    def boundary(x, on_boundary):
-        return on_boundary
+    # def boundary(x, on_boundary):
+    #     return on_boundary
 
-    bc = dde.icbc.DirichletBC(geom, lambda x: 0, boundary)
+    # bc = dde.icbc.DirichletBC(geom, lambda x: 0, boundary)
 
     # Define observation points
-    modeldata = dde.icbc.PointSetBC(X_train, y_train)
+    modeldata = dde.icbc.PointSetBC(X_model, y_model)
+
+
+
+    datatrain = FileData(trainname, yname)
+    datatest = FileData(testname, yname)
+    kf = ShuffleSplit(
+        n_splits=2, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
+    )
+    for train_index, test_index in kf.split(datatest.X):
+        X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
+        y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+        data = dde.data.DataSet(
+            X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
+        )
+
+    bc_anchors = dde.icbc.PointSetBC(X_train, y_train)
 
     # Create the PDE problem
     def pde(x, y):
@@ -139,26 +153,16 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
             dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # σ=C/73.5h^2
             return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
     data = dde.data.PDE(
-        geom,
-        pde,
-        [bc, modeldata],
+        geom, # Predefined geometry domain
+        pde, # Functions described previously
+        [bc_anchors, modeldata], # Generated data
         num_domain=1000,
         num_boundary=100,
-        anchors=X_train,
+        anchors=X_train, # Experimental data
     )
     ### This is the PINN part I'm working on... the stuff below here works.
 
-    # datatrain = FileData(trainname, yname)
-    # datatest = FileData(testname, yname)
-    # kf = ShuffleSplit(
-    #     n_splits=2, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
-    # )
-    # for train_index, test_index in kf.split(datatest.X):
-    #     X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-    #     y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
-    #     data = dde.data.DataSet(
-    #         X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
-    #     )
+    
 
     # Define the neural network
     net = dde.nn.FNN([4] + [wid] * lay + [1], "tanh", "Glorot uniform")
