@@ -36,11 +36,11 @@ class FileData(object):
             # For 25˚ case
             df['dP/dh (N/m)'] *= 0.2 / df['hm (um)']
         # Scale from Conical to Berkovich with small deformations
-        if 'FEM_70deg' in name:
+        if 'FEM_2D' in name or 'FEM_3D' in name:
             df['dP/dh (N/m)'] *= 1.167 / 1.128
-        # Scale from Conical to Berkovich with large deformations (See Dao et al. 2001
-        if '2D' in name:
-            df['dP/dh (N/m)'] *= 1.2370 / 1.1957
+        # # Scale from Conical to Berkovich with large deformations (See Dao et al. 2001
+        # if 'FEM_2D' in name or 'FEM_3D' in name:
+        #     df['dP/dh (N/m)'] *= 1.2370 / 1.1957
         # Get Estar if none provided
         if '2D' in name or '3D' in name:
             df['Er (GPa)'] = EtoEr(df['E (GPa)'].values, df['nu'].values)[:, None]
@@ -49,14 +49,14 @@ class FileData(object):
 
         if self.X is None:
             if self.yname == 'n' or self.yname == 's0.033':
-                self.X = df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'sy (GPa)', 'Er (GPa)']].values
+                self.X = df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'hm (um)', 'sy (GPa)', 'Er (GPa)']].values
             else:
-                self.X = df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt']].values
+                self.X = df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'hm (um)']].values
         else:
             if self.yname == 'n' or self.yname == 's0.033':
-                self.X = np.vstack((self.X, df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'sy (GPa)', 'Er (GPa)']].values))
+                self.X = np.vstack((self.X, df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'hm (um)', 'sy (GPa)', 'Er (GPa)']].values))
             else:
-                self.X = np.vstack((self.X, df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt']].values))
+                self.X = np.vstack((self.X, df[['C (GPa)', 'dP/dh (N/m)', 'Wp/Wt', 'hm (um)']].values))
         if self.new == True:
             if self.y is None:
                 self.y = df[['C (GPa)']].values
