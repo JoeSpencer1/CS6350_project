@@ -15,9 +15,9 @@ from data import FileData
 import tensorflow as tf
 tf.config.run_functions_eagerly(False)
 import os
-import multiprocessing
 dde.backend.set_default_backend('tensorflow.compat.v1')
 dde.backend.tf.Session()
+
 
 global apeG, yG
 
@@ -83,99 +83,202 @@ def mfnn(data, lay, wid, xdim):
         train_state.best_y[1],
     )
 
+# pde_yname = lambda x, y: pde(x, y, yname)
+def pde_Er(x, y):
+    # Define your PDE here. This is a placeholder and should be replaced with your actual PDE.
+    # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
+    dy_x1 = 0
+    dy_x2 = dde.grad.jacobian(y, x, i=0, j=1)
+    dy_x3 = 0
+    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
+    print(dy_x1 + dy_x2 + dy_x3 + dy_x4 - y)
+    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
+    
+def pdf_sy(x, y):
+    dy_x1 = dde.grad.jacobian(y, x, i=0, j=0) # σ=C/73.5h^2
+    dy_x2 = 0
+    dy_x3 = 0
+    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # σ=C/73.5h^2
+    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
+
+# Generate "physical model" training data
+def gen_traindata(num, yname):
+    C_l, C_h = 2.5, 250
+    dPdh_l, dPdh_h = 10000, 300000
+    WpWt_l, WpWt_h = 0.4, 0.9
+    hm_l, hm_h = 0.1, 0.4
+    x1 = np.linspace(C_l, C_h, num)
+    x2 = np.linspace(dPdh_l, dPdh_h, num)
+    x3 = np.linspace(WpWt_l, WpWt_h, num)
+    x4 = np.linspace(hm_l, hm_h, num)
+    X = np.column_stack((x1, x2, x3, x4))
+    
+    if yname == 'Er':
+        Y = np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
+    if yname == 'sy':
+        Y = x1 / 73.5
+    return X, Y.reshape(-1, 1)
+
+class TestCallback(dde.callbacks.Callback):
+    def __init__(self, X_test, y_test, period=1000):
+        super().__init__()
+        self.X_test = X_test
+        self.y_test = y_test
+        self.period = period
+        self.test_errors = []
+        self.current_epoch = 0
+
+    def on_epoch_end(self):
+        self.current_epoch += 1
+        if self.current_epoch % self.period == 0:
+            y_pred = self.model.predict(self.X_test)
+            error = dde.metrics.l2_relative_error(self.y_test, y_pred)
+            print(f"Epoch {self.current_epoch}: Test L2 relative error: {error}")
+            self.test_errors.append(error)
+
 def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
-    def gen_traindata(num):
-        C_l, C_h = 2.5, 250
-        dPdh_l, dPdh_h = 10000, 300000
-        WpWt_l, WpWt_h = 0.4, 0.9
-        hm_l, hm_h = 0.1, 0.4
-        
-        x1 = np.linspace(C_l, C_h, num)
-        x2 = np.linspace(dPdh_l, dPdh_h, num)
-        x3 = np.linspace(WpWt_l, WpWt_h, num)
-        x4 = np.linspace(hm_l, hm_h, num)
-        X = np.column_stack((x1, x2, x3, x4))
-        
-        # Generate output based on yname
-        if yname == 'Er':
-            # Replace these dummy functions
-            Y = np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
-        if yname == 'sy':
-            Y = x1 / 73.5
-        
-        return X, Y.reshape(-1, 1)
-
-    # Generate training data
-    X_model, y_model = gen_traindata(1000)
-
-    # Define the geometry
-    geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
-
-    # Define the boundary condition (if applicable)
-    # def boundary(x, on_boundary):
-    #     return on_boundary
-
-    # bc = dde.icbc.DirichletBC(geom, lambda x: 0, boundary)
-
-    # Define observation points
-    modeldata = dde.icbc.PointSetBC(X_model, y_model)
-
-
-
+    # Generate model data
+    X_model, y_model = gen_traindata(1000, yname)
+    
+    # Get experimental training and test data
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
-    kf = ShuffleSplit(
-        n_splits=2, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
-    )
-    for train_index, test_index in kf.split(datatest.X):
-        X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-        y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
-        data = dde.data.DataSet(
-            X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
-        )
-
-    bc_anchors = dde.icbc.PointSetBC(X_train, y_train)
-
-    # Create the PDE problem
+    
+    # Define geometry
+    geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
+    
+    # Define PDE
     def pde(x, y):
-        # Define your PDE here. This is a placeholder and should be replaced with your actual PDE.
-        # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-        if yname == 'Er':
-            dy_x1 = 0
-            dy_x2 = dde.grad.jacobian(y, x, i=0, j=1)
-            dy_x3 = 0
-            dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
-            return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
-        if yname == 'sy':
-            dy_x1 = dde.grad.jacobian(y, x, i=0, j=0) # σ=C/73.5h^2
-            dy_x2 = 0
-            dy_x3 = 0
-            dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # σ=C/73.5h^2
-            return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
+        # Define your PDE here. This is a placeholder.
+        return dde.grad.jacobian(y, x, i=0, j=0) - y
+    
+    # Define boundary condition using experimental data
+    bc = dde.icbc.PointSetBC(datatrain.X, datatrain.y)
+    
+    # Create the PDE problem
     data = dde.data.PDE(
-        geom, # Predefined geometry domain
-        pde, # Functions described previously
-        [bc_anchors, modeldata], # Generated data
+        geom,
+        pde_Er,
+        bc,
         num_domain=1000,
         num_boundary=100,
-        anchors=X_train, # Experimental data
+        anchors=X_model # Use model data as additional training points
     )
-    ### This is the PINN part I'm working on... the stuff below here works.
-
     
-
-    # Define the neural network
-    net = dde.nn.FNN([4] + [wid] * lay + [1], "tanh", "Glorot uniform")
-
-    # Create and compile the model
+    # Define neural network
+    layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
+    activation = 'tanh'
+    initializer = 'Glorot uniform'
+    net = dde.maps.FNN(layer_size, activation, initializer)
+    
+    # Create model
     model = dde.Model(data, net)
-    model.compile("adam", lr=0.001, loss="mse")
+    
+    # Compile model
+    model.compile("adam", lr=0.001)
+    
+    # Create test callback
+    test_callback = TestCallback(datatest.X, datatest.y, period=1000)
+    
+    # Train model
+    losshistory, train_state = model.train(epochs=30000, callbacks=[test_callback])
+    
+    # Get the best test error
+    best_test_error = min(test_callback.test_errors) if test_callback.test_errors else None
+    
+    dde.saveplot(losshistory, train_state, issave=True, isplot=False)
+    
+    return best_test_error
 
-    # Train the model
-    losshistory, train_state = model.train(epochs=10000)
 
-    print('Made it!')
-    return train_state.best_metrics
+
+
+
+
+
+# def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
+
+#     X_model, y_model = gen_traindata(1000, yname)
+#     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
+#     modeldata = dde.icbc.PointSetBC(X_model, y_model)
+
+#     # Get unique training data (2D/3D FEM, experiment)
+#     datatrain = FileData(trainname, yname)
+#     datatest = FileData(testname, yname)
+#     kf = ShuffleSplit(
+#         n_splits=2, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
+#     )
+#     for train_index, test_index in kf.split(datatest.X):
+#         X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
+#         y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+#         data = dde.data.DataSet(
+#             X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
+#         )
+
+#     # Make physics-informed dataset
+#     bc_anchors = dde.icbc.PointSetBC(X_train, y_train)
+#     mape = []
+#     iter = 0
+#     # mape.append(dde.utils.apply(pinn, (data,lay,wid,)))
+#     for train_index, test_index in kf.split(datatest.X):
+#         iter += 1
+#         print('\nCross-validation iteration: {}'.format(iter))
+#         train_index = train_index * len(datatrain.X) // len(datatest.X)
+
+#         X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
+#         y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+
+#         # data = dde.data.DataSet(
+#         #     X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
+#         # )
+#         data = dde.data.TimePDE(
+#             geom, # Predefined geometry domain
+#             pde_Er, # Functions described previously
+#             bc_anchors,
+#             num_domain=1000,
+#             num_boundary=len(bc_anchors),
+#             # anchors=X_train
+#         )
+#         # data.add_anchors(X_train, y_train)
+#         # data.add_anchors(y_train)
+#         print('train_x: ', data.train_x)
+#         print('test_x: ', data.test_x)
+#         print('train_y: ', data.train_y)
+#         print('test_y: ', data.test_y)
+#         # mape.append(dde.utils.apply(nn, (data,lay,wid,)))
+#         # mape.append(pinn(data,lay,wid))
+
+#     #lay, wid = 2, 32
+#     layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
+#     activation = 'selu'
+#     initializer = 'LeCun normal'
+#     regularization = ['l2', 0.01]
+    
+#     loss = 'MAPE'
+#     optimizer = 'adam'
+#     lr = 0.0001 if data.train_x.shape[1] == 3 else 0.001
+#     epochs = 30000
+#     net = dde.maps.FNN(
+#         layer_size, activation, initializer, regularization=regularization
+#     )
+#     model = dde.Model(data, net)
+#     model.compile(optimizer, lr=lr, loss=loss, metrics=['MAPE'])
+#     losshistory, train_state = model.train(epochs=epochs)
+#     dde.saveplot(losshistory, train_state, issave=True, isplot=False)
+#     return train_state.best_metrics[0]
+
+#     # Define the neural network
+#     net = dde.nn.FNN([4] + [wid] * lay + [1], "tanh", "Glorot uniform")
+
+#     # Create and compile the model
+#     model = dde.Model(data, net)
+#     model.compile("adam", lr=0.001, loss="mse")
+
+#     # Train the model
+#     losshistory, train_state = model.train(epochs=10000)
+
+#     print('Made it!')
+#     return train_state.best_metrics
 
 def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)
