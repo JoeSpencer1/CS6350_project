@@ -87,10 +87,11 @@ def mfnn(data, lay, wid, xdim):
 def pde_Er(x, y):
     # Define your PDE here. This is a placeholder and should be replaced with your actual PDE.
     # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-    dy_x1 = dde.grad.jacobian(y, x, i=0, j=0)
+    # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
+    dy_x1 = dde.grad.jacobian(y, x, i=0, j=0) 
     dy_x2 = dde.grad.jacobian(y, x, i=0, j=1)
     dy_x3 = dde.grad.jacobian(y, x, i=0, j=2)
-    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
+    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) 
     print(dy_x1 + dy_x2 + dy_x3 + dy_x4 - y)
     return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
     
