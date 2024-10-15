@@ -17,7 +17,7 @@ tf.config.run_functions_eagerly(False)
 import os
 dde.backend.set_default_backend('tensorflow.compat.v1')
 dde.backend.tf.Session()
-
+import torch
 
 global apeG, yG
 
@@ -85,21 +85,21 @@ def mfnn(data, lay, wid, xdim):
 
 # pde_yname = lambda x, y: pde(x, y, yname)
 def pde_Er(x, y):
-    # Define your PDE here. This is a placeholder and should be replaced with your actual PDE.
     # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
     # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
-    dy_x1 = dde.grad.jacobian(y, x, i=0, j=0) 
-    dy_x2 = dde.grad.jacobian(y, x, i=0, j=1)
-    dy_x3 = dde.grad.jacobian(y, x, i=0, j=2)
-    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) 
-    print(dy_x1 + dy_x2 + dy_x3 + dy_x4 - y)
-    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
+    dy_x1 = 0
+    dy_x2 = np.sqrt(np.pi) / (2 * np.sqrt(24.5))
+    dy_x3 = 0
+    dy_x4 = np.sqrt(np.pi) / (2 * np.sqrt(24.5))
+    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y
     
 def pde_sy(x, y):
-    dy_x1 = dde.grad.jacobian(y, x, i=0, j=0) # σ=C/73.5h^2
-    dy_x2 = dde.grad.jacobian(y, x, i=0, j=1)
-    dy_x3 = dde.grad.jacobian(y, x, i=0, j=2)
-    dy_x4 = dde.grad.jacobian(y, x, i=0, j=3) # σ=C/73.5h^2
+    # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
+    # sy=C/73.5=Pm/73.5hm^2
+    dy_x1 = x[:,0]/73.5
+    dy_x2 = 0
+    dy_x3 = 0
+    dy_x4 = 0
     return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
 
 # Generate "physical model" training data
@@ -151,14 +151,24 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     bc = dde.icbc.PointSetBC(datatrain.X, datatrain.y)
     
     # Create the PDE problem
-    data = dde.data.PDE(
-        geom,
-        pde_Er,
-        bc,
-        num_domain=1000,
-        num_boundary=100,
-        anchors=X_model # Use model data as additional training points
-    )
+    if yname == 'Er':
+        data = dde.data.PDE(
+            geom,
+            pde_Er,
+            bc,
+            num_domain=1000,
+            num_boundary=100,
+            anchors=X_model # Use model data as additional training points
+        )
+    if yname == 'sy':
+        data = dde.data.PDE(
+            geom,
+            pde_sy,
+            bc,
+            num_domain=1000,
+            num_boundary=100,
+            anchors=X_model # Use model data as additional training points
+        )
     
     # Define neural network
     layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]

@@ -23,7 +23,7 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
-        "pinn_one('sy', 'B3090', 'B3090', 12, n_vd=0)"
+        "pinn_one('Er', 'B3090', 'B3090', 12, n_vd=0)"
         ]))
     # run_processes(np.array([
     #     "validation_three('sy', 'TI33_25', 'TI33_25', 0, '3D_linear', 0, '2D_70_linear', 0, typ='lo')",
