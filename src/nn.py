@@ -123,23 +123,6 @@ def gen_traindata(num, yname):
         Y = x1 / 73.5
     return X, Y
 
-# class TestCallback(dde.callbacks.Callback):
-#     def __init__(self, X_test, y_test, period=1000):
-#         super().__init__()
-#         self.X_test = X_test
-#         self.y_test = y_test
-#         self.period = period
-#         self.test_errors = []
-#         self.current_epoch = 0
-
-#     def on_epoch_end(self):
-#         self.current_epoch += 1
-#         if self.current_epoch % self.period == 0:
-#             y_pred = self.model.predict(self.X_test)
-#             error = dde.metrics.l2_relative_error(self.y_test, y_pred)
-#             # print(f"Epoch {self.current_epoch}: Test L2 relative error: {error}")
-#             self.test_errors.append(error)
-
 class TestCallback(dde.callbacks.Callback):
     def __init__(self, X_test, y_test, period=1000):
         super().__init__()
@@ -170,6 +153,10 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Get experimental training and test data
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
+
+    indices = np.random.choice(datatrain.X.shape[0], size=n_hi, replace=False)
+    datatrain.X = datatrain.X[indices]
+    datatrain.y = datatrain.y[indices]
     
     # Define boundary condition using experimental data
     datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
