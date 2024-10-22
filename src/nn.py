@@ -32,8 +32,6 @@ def t2s(names):
         return names
     else:
         return '[' + ','.join(names) + ']'
-
-import deepxde as dde
     
 def nn(data, lay, wid):
     #lay, wid = 2, 32
@@ -83,24 +81,29 @@ def mfnn(data, lay, wid, xdim):
         train_state.best_y[1],
     )
 
-# pde_yname = lambda x, y: pde(x, y, yname)
 def pde_Er(x, y):
     # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
     # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
-    dy_x1 = 0
-    dy_x2 = np.sqrt(np.pi) / (2 * np.sqrt(24.5))
-    dy_x3 = 0
-    dy_x4 = np.sqrt(np.pi) / (2 * np.sqrt(24.5))
-    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y
-    
+    # x0 = 0
+    x1 = x[:,1]
+    # x2 = 0
+    x3 = x[:,3]
+    return 1e-3*np.sqrt(np.pi) * x1 / (2 * x3 * np.sqrt(24.5)) - y
+
 def pde_sy(x, y):
     # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-    # sy=C/73.5=Pm/73.5hm^2
-    dy_x1 = x[:,0]/73.5
-    dy_x2 = 0
-    dy_x3 = 0
-    dy_x4 = 0
-    return dy_x1 + dy_x2 + dy_x3 + dy_x4 - y 
+    # sy=Pm/3Ac=Pm/73.5hm^2=C/73.5
+    x0 = x[:,0]
+    # x1 = 0
+    # x2 = 0
+    # x3 = 0
+    return x0/73.5 - y 
+
+def sol_Er(x):
+    return 1e-3*np.sqrt(np.pi) * x[1] / (2 * x[3] * np.sqrt(24.5))
+
+def sol_sy(x):
+    return x[0] / 73.5
 
 # Generate "physical model" training data
 def gen_traindata(num, yname):
@@ -115,10 +118,27 @@ def gen_traindata(num, yname):
     X = np.column_stack((x1, x2, x3, x4))
     
     if yname == 'Er':
-        Y = np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
+        Y = 1e-3*np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
     if yname == 'sy':
         Y = x1 / 73.5
-    return X, Y.reshape(-1, 1)
+    return X, Y
+
+# class TestCallback(dde.callbacks.Callback):
+#     def __init__(self, X_test, y_test, period=1000):
+#         super().__init__()
+#         self.X_test = X_test
+#         self.y_test = y_test
+#         self.period = period
+#         self.test_errors = []
+#         self.current_epoch = 0
+
+#     def on_epoch_end(self):
+#         self.current_epoch += 1
+#         if self.current_epoch % self.period == 0:
+#             y_pred = self.model.predict(self.X_test)
+#             error = dde.metrics.l2_relative_error(self.y_test, y_pred)
+#             # print(f"Epoch {self.current_epoch}: Test L2 relative error: {error}")
+#             self.test_errors.append(error)
 
 class TestCallback(dde.callbacks.Callback):
     def __init__(self, X_test, y_test, period=1000):
@@ -133,41 +153,45 @@ class TestCallback(dde.callbacks.Callback):
         self.current_epoch += 1
         if self.current_epoch % self.period == 0:
             y_pred = self.model.predict(self.X_test)
-            error = dde.metrics.l2_relative_error(self.y_test, y_pred)
-            # print(f"Epoch {self.current_epoch}: Test L2 relative error: {error}")
+            error = np.mean(np.abs((self.y_test - y_pred) / self.y_test)) * 100
             self.test_errors.append(error)
 
 def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Generate model data
+    geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
     X_model, y_model = gen_traindata(1000, yname)
+    generated = dde.icbc.PointSetBC(X_model, y_model, component=0)
+
+    if yname == 'Er':
+        bc = dde.icbc.DirichletBC(geom, sol_Er, lambda _, on_boundary: on_boundary, component=0)
+    if yname == 'sy':
+        bc = dde.icbc.DirichletBC(geom, sol_sy, lambda _, on_boundary: on_boundary, component=0)
     
     # Get experimental training and test data
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
-
-    geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
     
     # Define boundary condition using experimental data
-    bc = dde.icbc.PointSetBC(datatrain.X, datatrain.y)
-    
+    datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
+
     # Create the PDE problem
     if yname == 'Er':
         data = dde.data.PDE(
             geom,
             pde_Er,
-            bc,
-            num_domain=1000,
+            [bc, generated,datafile],
+            num_domain=100,
             num_boundary=100,
-            anchors=X_model # Use model data as additional training points
+            num_test=100,
         )
     if yname == 'sy':
         data = dde.data.PDE(
             geom,
             pde_sy,
-            bc,
-            num_domain=1000,
+            [bc, generated, datafile],
+            num_domain=100,
             num_boundary=100,
-            anchors=X_model # Use model data as additional training points
+            num_test=100,
         )
     
     # Define neural network
@@ -179,13 +203,15 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     model.compile("adam", lr=0.001)
     test_callback = TestCallback(datatest.X, datatest.y, period=1000)
     losshistory, train_state = model.train(epochs=30000, callbacks=[test_callback])
-    best_test_error = min(test_callback.test_errors) if test_callback.test_errors else None
-    
-    dde.saveplot(losshistory, train_state, issave=True, isplot=False)
-    print(best_test_error)
 
-    return best_test_error
 
+    # Calculate final mean percent error
+    y_pred = model.predict(datatest.X)
+    final_error = np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100
+    stdev_error = np.std(np.abs((datatest.y - y_pred) / datatest.y)) * 100
+    print(f"Mean percent error: {final_error}±{stdev_error}%")
+
+    return final_error, stdev_error
 
 def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)
