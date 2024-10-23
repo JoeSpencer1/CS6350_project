@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import itertools
-
 import numpy as np
 from sklearn.svm import SVR
 from sklearn.model_selection import KFold, LeaveOneOut, RepeatedKFold, ShuffleSplit, StratifiedKFold
@@ -17,7 +15,6 @@ tf.config.run_functions_eagerly(False)
 import os
 dde.backend.set_default_backend('tensorflow.compat.v1')
 dde.backend.tf.Session()
-import torch
 
 global apeG, yG
 
@@ -166,7 +163,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         data = dde.data.PDE(
             geom,
             pde_Er,
-            [bc, generated,datafile],
+            [bc, generated, datafile],
             num_domain=100,
             num_boundary=100,
             num_test=100,
@@ -197,6 +194,9 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     final_error = np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100
     stdev_error = np.std(np.abs((datatest.y - y_pred) / datatest.y)) * 100
     print(f"Mean percent error: {final_error}±{stdev_error}%")
+
+    with open('output.txt', 'a') as f:
+        f.write('pinn_one ' + yname + ' ' + str(final_error) + ' ' + str(stdev_error) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
 
     return final_error, stdev_error
 
@@ -235,7 +235,7 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     print(mape)
     print(yname, n_hi, np.mean(mape), np.std(mape))
     with open('output.txt', 'a') as f:
-        f.write('validation_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+        f.write('nn_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
 
 def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2, lay=2, wid=128):
     datalow = FileData(trainlow, yname)
@@ -294,10 +294,10 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
             mape.append(dde.utils.apply(mfnn, (data, lay, wid, 3, ))[0])
 
     with open('output.txt', 'a') as f:
-        f.write('validation_two ' + yname + ' ' + f'{np.mean(mape, axis=0):.2f}' + ' ' + f'{np.std(mape, axis=0):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + str(v_lo) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+        f.write('mfnn_two ' + yname + ' ' + f'{np.mean(mape, axis=0):.2f}' + ' ' + f'{np.std(mape, axis=0):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + str(v_lo) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
     print(np.std(mape))
     print(mape)
-    print(yname, 'validation_two ', t2s(trainlow), ' ', t2s(trainhigh), ' ', str(n_hi), ' ', np.mean(mape), np.std(mape))
+    print(yname, 'mfnn_two ', t2s(trainlow), ' ', t2s(trainhigh), ' ', str(n_hi), ' ', np.mean(mape), np.std(mape))
 
 def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo, typ='hi', n_vd=0.2, v_lo=0, v_hi=0, lay=2, wid=128):
     datalow = FileData(trainlow, yname)
@@ -388,7 +388,7 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
             y.append(res[2])
 
     with open('output.txt', 'a') as f:
-        f.write('validation_three ' + yname + ' ' + f'{np.mean(ape, axis=0)[0]:.2f}' + ' ' + f'{np.std(ape, axis=0)[0]:.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainexp) + ' ' + str(n_exp) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + typ + ' ' + str(n_vd) + ' ' + str(v_hi) + ' ' + str(v_lo) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+        f.write('mfnn_three ' + yname + ' ' + f'{np.mean(ape, axis=0)[0]:.2f}' + ' ' + f'{np.std(ape, axis=0)[0]:.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainexp) + ' ' + str(n_exp) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + typ + ' ' + str(n_vd) + ' ' + str(v_hi) + ' ' + str(v_lo) + ' ' + str(lay) + ' ' + str(wid) + '\n')
     # print('Saved to ', yname, '.dat.')
     # np.savetxt(yname + '.dat', np.hstack(y).T)  
 
