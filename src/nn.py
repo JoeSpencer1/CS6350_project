@@ -151,54 +151,64 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
 
-    indices = np.random.choice(datatrain.X.shape[0], size=n_hi, replace=False)
-    datatrain.X = datatrain.X[indices]
-    datatrain.y = datatrain.y[indices]
-    
     # Define boundary condition using experimental data
     datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
-
-    # Create the PDE problem
-    if yname == 'Er':
-        data = dde.data.PDE(
-            geom,
-            pde_Er,
-            [bc, generated, datafile],
-            num_domain=100,
-            num_boundary=100,
-            num_test=100,
-        )
-    if yname == 'sy':
-        data = dde.data.PDE(
-            geom,
-            pde_sy,
-            [bc, generated, datafile],
-            num_domain=100,
-            num_boundary=100,
-            num_test=100,
-        )
     
-    # Define neural network
-    layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
-    activation = 'tanh'
-    initializer = 'Glorot uniform'
-    net = dde.maps.FNN(layer_size, activation, initializer)
-    model = dde.Model(data, net)
-    model.compile("adam", lr=0.001)
-    test_callback = TestCallback(datatest.X, datatest.y, period=1000)
-    losshistory, train_state = model.train(epochs=30000, callbacks=[test_callback])
+    kf = ShuffleSplit(
+        n_splits=10, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
+    )
 
+    mape = []
+    iter = 0
+    for train_index, test_index in kf.split(datatrain.X):
+        iter += 1
+        print(f"Iteration {iter}")
+        train_index = np.clip((train_index * len(datatrain.X) / n_hi).astype(int), 0, len(datatrain.X) - 1)
+        test_index = np.clip((test_index * len(datatest.X) / n_hi).astype(int), 0, len(datatest.X) - 1)
 
-    # Calculate final mean percent error
-    y_pred = model.predict(datatest.X)
-    final_error = np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100
-    stdev_error = np.std(np.abs((datatest.y - y_pred) / datatest.y)) * 100
-    print(f"Mean percent error: {final_error}±{stdev_error}%")
+        datatrain.X, datatest.X = datatrain.X[train_index], datatest.X[test_index]
+        datatrain.y, datatest.y = datatrain.y[train_index], datatest.y[test_index]
+
+        # Create the PDE problem
+        if yname == 'Er':
+            data = dde.data.PDE(
+                geom,
+                pde_Er,
+                [bc, generated, datafile],
+                num_domain=100,
+                num_boundary=100,
+                num_test=100,
+            )
+        if yname == 'sy':
+            data = dde.data.PDE(
+                geom,
+                pde_sy,
+                [bc, generated, datafile],
+                num_domain=100,
+                num_boundary=100,
+                num_test=100,
+            )
+    
+        # Define neural network
+        layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
+        activation = 'tanh'
+        initializer = 'Glorot uniform'
+        net = dde.maps.FNN(layer_size, activation, initializer)
+        model = dde.Model(data, net)
+        model.compile("adam", lr=0.001)
+        test_callback = TestCallback(datatest.X, datatest.y, period=1000)
+        losshistory, train_state = model.train(epochs=30000, callbacks=[test_callback])
+
+        # Calculate final mean percent error
+        y_pred = model.predict(datatest.X)
+        mape.append(np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100)
+
+    print(f"Mean percent error: {np.mean(mape)}±{np.std(mape)}%")
 
     with open('output.txt', 'a') as f:
-        f.write('pinn_one ' + yname + ' ' + str(final_error) + ' ' + str(stdev_error) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+        f.write('pinn_one ' + yname + ' ' + str(np.mean(mape)) + ' ' + str(np.std(mape)) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
 
-    return final_error, stdev_error
+    return
 
 def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)
@@ -236,6 +246,8 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     print(yname, n_hi, np.mean(mape), np.std(mape))
     with open('output.txt', 'a') as f:
         f.write('nn_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+    
+    return
 
 def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2, lay=2, wid=128):
     datalow = FileData(trainlow, yname)
@@ -298,6 +310,8 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
     print(np.std(mape))
     print(mape)
     print(yname, 'mfnn_two ', t2s(trainlow), ' ', t2s(trainhigh), ' ', str(n_hi), ' ', np.mean(mape), np.std(mape))
+
+    return
 
 def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo, typ='hi', n_vd=0.2, v_lo=0, v_hi=0, lay=2, wid=128):
     datalow = FileData(trainlow, yname)
@@ -389,8 +403,8 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
 
     with open('output.txt', 'a') as f:
         f.write('mfnn_three ' + yname + ' ' + f'{np.mean(ape, axis=0)[0]:.2f}' + ' ' + f'{np.std(ape, axis=0)[0]:.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainexp) + ' ' + str(n_exp) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + typ + ' ' + str(n_vd) + ' ' + str(v_hi) + ' ' + str(v_lo) + ' ' + str(lay) + ' ' + str(wid) + '\n')
-    # print('Saved to ', yname, '.dat.')
-    # np.savetxt(yname + '.dat', np.hstack(y).T)  
+        
+    return
 
 def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
     datalow = FileData(train_lo, yname)
@@ -429,6 +443,8 @@ def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
     print(np.std(y, axis=0))
     print(np.mean(np.mean(y, axis=0), axis=0))
     print(np.mean(np.std(y, axis=0), axis=0))
+
+    return(np.mean(np.mean(y, axis=0), axis=0), np.mean(np.std(y, axis=0), axis=0))
 
 def main(argument=None):
     if argument != None:
