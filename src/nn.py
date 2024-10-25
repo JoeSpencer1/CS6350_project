@@ -154,8 +154,18 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Define boundary condition using experimental data
     datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
     
+    if n_hi == 0 or n_hi < 10: 
+        train_size = max(10, int(0.1 * len(datatrain.X)))
+        test_size = len(datatrain.X) - train_size
+    else:
+        train_size = n_hi
+        test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+
     kf = ShuffleSplit(
-        n_splits=10, train_size=n_hi, test_size=len(datatrain.X) - n_hi, random_state=0
+        n_splits=10,
+        train_size=train_size,
+        test_size=test_size,
+        random_state=0
     )
 
     mape = []
@@ -169,25 +179,45 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         datatrain.X, datatest.X = datatrain.X[train_index], datatest.X[test_index]
         datatrain.y, datatest.y = datatrain.y[train_index], datatest.y[test_index]
 
-        # Create the PDE problem
-        if yname == 'Er':
-            data = dde.data.PDE(
-                geom,
-                pde_Er,
-                [bc, generated, datafile],
-                num_domain=100,
-                num_boundary=100,
-                num_test=100,
-            )
-        if yname == 'sy':
-            data = dde.data.PDE(
-                geom,
-                pde_sy,
-                [bc, generated, datafile],
-                num_domain=100,
-                num_boundary=100,
-                num_test=100,
-            )
+        if n_hi > 0:
+            # Create the PDE problem
+            if yname == 'Er':
+                data = dde.data.PDE(
+                    geom,
+                    pde_Er,
+                    [bc, generated, datafile],
+                    num_domain=100,
+                    num_boundary=100,
+                    num_test=100,
+                )
+            if yname == 'sy':
+                data = dde.data.PDE(
+                    geom,
+                    pde_sy,
+                    [bc, generated, datafile],
+                    num_domain=100,
+                    num_boundary=100,
+                    num_test=100,
+                )
+        else:
+            if yname == 'Er':
+                data = dde.data.PDE(
+                    geom,
+                    pde_Er,
+                    [bc, generated],
+                    num_domain=100,
+                    num_boundary=100,
+                    num_test=100,
+                )
+            if yname == 'sy':
+                data = dde.data.PDE(
+                    geom,
+                    pde_sy,
+                    [bc, generated],
+                    num_domain=100,
+                    num_boundary=100,
+                    num_test=100,
+                )
     
         # Define neural network
         layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]

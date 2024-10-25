@@ -23,5 +23,6 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
-        "pinn_one('Er', 'Al6061', ('B3067'), 30)"
+        "pinn_one('sy', 'B3067', ('B3067'), 0)",
+        "pinn_one('Er', 'B3067', ('B3067'), 0)"
         ]))
