@@ -154,9 +154,9 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Define boundary condition using experimental data
     datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
     
-    if n_hi == 0 or n_hi < 10: 
-        train_size = max(10, int(0.1 * len(datatrain.X)))
-        test_size = len(datatrain.X) - train_size
+    if n_hi == 0: 
+        train_size = 10
+        test_size = len(datatest.X) - train_size
     else:
         train_size = n_hi
         test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
@@ -333,7 +333,7 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
                 y_hi_test=datatest.y[test_index],
                 standardize=True
             )
-            mape.append(dde.utils.apply(mfnn, (data, lay, wid, 3, ))[0])
+            mape.append(dde.utils.apply(mfnn, (data, lay, wid, 4, ))[0])
 
     with open('output.txt', 'a') as f:
         f.write('mfnn_two ' + yname + ' ' + f'{np.mean(mape, axis=0):.2f}' + ' ' + f'{np.std(mape, axis=0):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainhigh) + ' ' + str(n_hi) + ' ' + t2s(trainlow) + ' ' + str(n_lo) + ' ' + str(v_lo) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
@@ -384,7 +384,7 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
                     y_hi_test=datatest.y[test_index],
                     standardize=True
                 )
-                ape.append(dde.utils.apply(mfnn, (data, lay, wid, 3, ))[0])
+                ape.append(dde.utils.apply(mfnn, (data, lay, wid, 4, ))[0])
         else:
             for train_index, test_index in kf.split(datatest.X):
                 iter += 1
@@ -427,7 +427,7 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
                     y_hi_test=datatest.y,
                     standardize=True
                 )
-            res = dde.utils.apply(mfnn, (data, lay, wid, 3, ))
+            res = dde.utils.apply(mfnn, (data, lay, wid, 4, ))
             ape.append(res[:2])
             y.append(res[2])
 
@@ -459,13 +459,13 @@ def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
         if yname == 'n':
             data.y_lo_train *= 10
             data.y_hi_train *= 10
-            res = dde.utils.apply(mfnn, (data,lay,wid,5,))
+            res = dde.utils.apply(mfnn, (data,lay,wid,6,))
             y.append(res[2] / 10)
         elif yname == 's0.033':
-            res = dde.utils.apply(mfnn, (data,lay,wid,5,))
+            res = dde.utils.apply(mfnn, (data,lay,wid,6,))
             y.append(res[2])
         else:
-            res = dde.utils.apply(mfnn, (data, lay, wid, 3,)) 
+            res = dde.utils.apply(mfnn, (data, lay, wid, 4,)) 
             y.append(res[2])
         ape.append(res[:2])
 
