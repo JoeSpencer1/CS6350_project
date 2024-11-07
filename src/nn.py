@@ -14,6 +14,10 @@ import tensorflow as tf
 tf.config.run_functions_eagerly(False)
 dde.backend.set_default_backend('tensorflow.compat.v1')
 dde.backend.tf.Session()
+import torch
+import torch.nn as tnn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
 
 global apeG, yG
 
@@ -239,117 +243,117 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     return
 
-# class KANModel(nn.Module):
-#     def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
-#         super(KANModel, self).__init__()
-#         self.layers = nn.ModuleList()
-#         self.layers.append(kan.KAN(width=[input_dim, hidden_dim], grid=5, k=3))
-#         for _ in range(num_layers - 1):
-#             self.layers.append(kan.KAN(width=[hidden_dim, hidden_dim], grid=5, k=3))
-#         self.layers.append(kan.KAN(width=[hidden_dim, output_dim], grid=5, k=3))
+class KANModel(tnn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super(KANModel, self).__init__()
+        self.layers = tnn.ModuleList()
+        self.layers.append(kan.KAN(width=[input_dim, hidden_dim], grid=5, k=3))
+        for _ in range(num_layers - 1):
+            self.layers.append(kan.KAN(width=[hidden_dim, hidden_dim], grid=5, k=3))
+        self.layers.append(kan.KAN(width=[hidden_dim, output_dim], grid=5, k=3))
 
-#     def forward(self, x):
-#         for layer in self.layers:
-#             x = layer(x)
-#         return x
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
-# def kan_model(data, lay, wid):
-#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def kan_model(data, lay, wid):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-#     # Convert data to PyTorch tensors
-#     X_train = torch.FloatTensor(data.train_x).to(device)
-#     y_train = torch.FloatTensor(data.train_y).to(device)
-#     X_test = torch.FloatTensor(data.test_x).to(device)
-#     y_test = torch.FloatTensor(data.test_y).to(device)
+    # Convert data to PyTorch tensors
+    X_train = torch.FloatTensor(data.train_x).to(device)
+    y_train = torch.FloatTensor(data.train_y).to(device)
+    X_test = torch.FloatTensor(data.test_x).to(device)
+    y_test = torch.FloatTensor(data.test_y).to(device)
     
-#     # Create DataLoader
-#     train_dataset = TensorDataset(X_train, y_train)
-#     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    # Create DataLoader
+    train_dataset = TensorDataset(X_train, y_train)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     
-#     # Initialize model
-#     input_dim = X_train.shape[1]
-#     model = KANModel(input_dim, wid, 1, lay).to(device)
+    # Initialize model
+    input_dim = X_train.shape[1]
+    model = KANModel(input_dim, wid, 1, lay).to(device)
     
-#     # Define loss and optimizer
-#     criterion = nn.L1Loss()  # MAE loss, similar to MAPE
-#     optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # Define loss and optimizer
+    criterion = tnn.L1Loss()  # MAE loss, similar to MAPE
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     
-#     # Training loop
-#     epochs = 30000
-#     for epoch in range(epochs):
-#         model.train()
-#         for batch_X, batch_y in train_loader:
-#             optimizer.zero_grad()
-#             outputs = model(batch_X)
-#             loss = criterion(outputs, batch_y)
-#             loss.backward()
-#             optimizer.step()
+    # Training loop
+    epochs = 300
+    for epoch in range(epochs):
+        model.train()
+        for batch_X, batch_y in train_loader:
+            optimizer.zero_grad()
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
+            optimizer.step()
         
-#         if (epoch + 1) % 1000 == 0:
-#             print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
+        if (epoch + 1) % 1000 == 0:
+            print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
     
-#     # Evaluate on test set
-#     model.eval()
-#     with torch.no_grad():
-#         y_pred = model(X_test)
-#         mape = torch.mean(torch.abs((y_test - y_pred) / y_test)) * 100
+    # Evaluate on test set
+    model.eval()
+    with torch.no_grad():
+        y_pred = model(X_test)
+        mape = torch.mean(torch.abs((y_test - y_pred) / y_test)) * 100
     
-#     return mape.item()
+    return mape.item()
 
-# def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
-#     # Load data (you'll need to implement FileData class)
-#     datatrain = FileData(trainname, yname)
-#     datatest = FileData(testname, yname)
+def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
+    # Load data (you'll need to implement FileData class)
+    datatrain = FileData(trainname, yname)
+    datatest = FileData(testname, yname)
 
-#     n_vd = int(n_vd * datatrain.X.shape[0]) if n_vd < 1 else int(n_vd)
-#     v_ind = np.random.choice(datatrain.X.shape[0], size=n_vd, replace=False)
-#     t_ind = np.setdiff1d(np.arange(datatrain.X.shape[0]), v_ind)
-#     dataval = FileData(testname, yname)
-#     dataval.X = datatrain.X[v_ind]
-#     dataval.y = datatrain.y[v_ind]
-#     datatrain.X = datatrain.X[t_ind]
-#     datatrain.y = datatrain.y[t_ind]
+    n_vd = int(n_vd * datatrain.X.shape[0]) if n_vd < 1 else int(n_vd)
+    v_ind = np.random.choice(datatrain.X.shape[0], size=n_vd, replace=False)
+    t_ind = np.setdiff1d(np.arange(datatrain.X.shape[0]), v_ind)
+    dataval = FileData(testname, yname)
+    dataval.X = datatrain.X[v_ind]
+    dataval.y = datatrain.y[v_ind]
+    datatrain.X = datatrain.X[t_ind]
+    datatrain.y = datatrain.y[t_ind]
 
-#     if n_hi == 0: 
-#         train_size = 10
-#         test_size = len(datatest.X) - train_size
-#     else:
-#         train_size = n_hi
-#         test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+    if n_hi == 0: 
+        train_size = 10
+        test_size = len(datatest.X) - train_size
+    else:
+        train_size = n_hi
+        test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
 
-#     kf = ShuffleSplit(
-#         n_splits=10,
-#         train_size=train_size,
-#         test_size=test_size,
-#         random_state=0
-#     )
+    kf = ShuffleSplit(
+        n_splits=10,
+        train_size=train_size,
+        test_size=test_size,
+        random_state=0
+    )
 
-#     mape = []
-#     iter = 0
-#     for train_index, test_index in kf.split(datatest.X):
-#         iter += 1
-#         print('\nCross-validation iteration: {}'.format(iter))
-#         train_index = train_index * len(datatrain.X) // len(datatest.X)
+    mape = []
+    iter = 0
+    for train_index, test_index in kf.split(datatest.X):
+        iter += 1
+        print('\nCross-validation iteration: {}'.format(iter))
+        train_index = train_index * len(datatrain.X) // len(datatest.X)
 
-#         X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-#         y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+        X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
+        y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
 
-#         # Create a data object similar to what dde.data.DataSet provides
-#         class Data:
-#             def __init__(self, X_train, y_train, X_test, y_test):
-#                 self.train_x = X_train
-#                 self.train_y = y_train
-#                 self.test_x = X_test
-#                 self.test_y = y_test
+        # Create a data object similar to what dde.data.DataSet provides
+        class Data:
+            def __init__(self, X_train, y_train, X_test, y_test):
+                self.train_x = X_train
+                self.train_y = y_train
+                self.test_x = X_test
+                self.test_y = y_test
 
-#         data = Data(X_train, y_train, X_test, y_test)
-#         mape.append(kan_model(data, lay, wid))
+        data = Data(X_train, y_train, X_test, y_test)
+        mape.append(kan_model(data, lay, wid))
 
-#     print(mape)
-#     print(yname, n_hi, np.mean(mape), np.std(mape))
-#     with open('output.txt', 'a') as f:
-#         f.write('kan_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
-#     return
+    print(mape)
+    print(yname, n_hi, np.mean(mape), np.std(mape))
+    with open('output.txt', 'a') as f:
+        f.write('kan_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+    return
 
 def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)

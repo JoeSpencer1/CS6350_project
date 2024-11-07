@@ -2,4 +2,5 @@
 data/.DS_Store
 .history
 *.dat
-__pycache__
+src/model
+src/__pycache__

@@ -23,6 +23,5 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
-        "pinn_one('sy', ('FEM_2D', 'FEM_3D'), ('FEM_2D', 'FEM_3D'), 0)",
-        "pinn_one('sy', ('FEM_2D', 'FEM_3D'), ('FEM_2D', 'FEM_3D'), 1)"
+        "kan_one('sy', ('FEM_2D', 'FEM_3D'), ('FEM_2D', 'FEM_3D'), 10)"
         ]))
