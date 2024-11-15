@@ -289,7 +289,7 @@ def kan_model(data, lay, wid):
             loss.backward()
             optimizer.step()
         
-        if (epoch + 1) % 1000 == 0:
+        if (epoch + 1) % 10 == 0:
             print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
     
     # Evaluate on test set
