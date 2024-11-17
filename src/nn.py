@@ -259,8 +259,6 @@ class KANModel(tnn.Module):
 
 def kan_model(data, lay, wid):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    
-    # Convert data to PyTorch tensors
     X_train = torch.FloatTensor(data.train_x).to(device)
     y_train = torch.FloatTensor(data.train_y).to(device)
     X_test = torch.FloatTensor(data.test_x).to(device)
@@ -270,16 +268,13 @@ def kan_model(data, lay, wid):
     train_dataset = TensorDataset(X_train, y_train)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     
-    # Initialize model
     input_dim = X_train.shape[1]
     model = KANModel(input_dim, wid, 1, lay).to(device)
     
-    # Define loss and optimizer
     criterion = tnn.L1Loss()  # MAE loss, similar to MAPE
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
-    # Training loop
-    epochs = 300
+    epochs = 30000
     for epoch in range(epochs):
         model.train()
         for batch_X, batch_y in train_loader:
@@ -289,10 +284,9 @@ def kan_model(data, lay, wid):
             loss.backward()
             optimizer.step()
         
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % 100 == 0:
             print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
     
-    # Evaluate on test set
     model.eval()
     with torch.no_grad():
         y_pred = model(X_test)
@@ -301,7 +295,6 @@ def kan_model(data, lay, wid):
     return mape.item()
 
 def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
-    # Load data (you'll need to implement FileData class)
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
 
@@ -314,12 +307,8 @@ def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain.X = datatrain.X[t_ind]
     datatrain.y = datatrain.y[t_ind]
 
-    if n_hi == 0: 
-        train_size = 10
-        test_size = len(datatest.X) - train_size
-    else:
-        train_size = n_hi
-        test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+    train_size = n_hi
+    test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
 
     kf = ShuffleSplit(
         n_splits=10,

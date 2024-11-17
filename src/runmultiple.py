@@ -23,5 +23,8 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
-        "kan_one('sy', ('FEM_2D', 'FEM_3D'), ('FEM_2D', 'FEM_3D'), 10)"
+        "pinn_one('Er', 'FEM_2D', ('FEM_2D'), 1)",
+        "kan_one('Er', 'FEM_2D', ('FEM_2D'), 1)",
+        "nn_one('Er', 'FEM_2D', ('FEM_2D'), 1)",
+        "mfnn_three('Er', 'exp', 'exp', 1, ('FEM_3D'), 14, ('FEM_2D'), 100)"
         ]))
