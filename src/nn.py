@@ -153,6 +153,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Get experimental training and test data
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
+    longest = max([datatrain.y, datatest.y], key=len)
 
     # Define boundary condition using experimental data
     datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
@@ -173,14 +174,12 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     mape = []
     iter = 0
-    for train_index, test_index in kf.split(datatrain.X):
+    for train_index, test_index in kf.split(longest):
         iter += 1
         print(f"Iteration {iter}")
-        train_index = np.clip((train_index * len(datatrain.X) / n_hi).astype(int), 0, len(datatrain.X) - 1)
-        test_index = np.clip((test_index * len(datatest.X) / n_hi).astype(int), 0, len(datatest.X) - 1)
 
-        datatrain.X, datatest.X = datatrain.X[train_index], datatest.X[test_index]
-        datatrain.y, datatest.y = datatrain.y[train_index], datatest.y[test_index]
+        datatrain.X, datatest.X = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
+        datatrain.y, datatest.y = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
 
         if n_hi > 0:
             # Create the PDE problem
@@ -297,6 +296,7 @@ def kan_model(data, lay, wid):
 def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain = FileData(trainname, yname)
     datatest = FileData(testname, yname)
+    longest = max([datatrain.y, datatest.y], key=len)
 
     n_vd = int(n_vd * datatrain.X.shape[0]) if n_vd < 1 else int(n_vd)
     v_ind = np.random.choice(datatrain.X.shape[0], size=n_vd, replace=False)
@@ -319,13 +319,12 @@ def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     mape = []
     iter = 0
-    for train_index, test_index in kf.split(datatest.X):
+    for train_index, test_index in kf.split(longest):
         iter += 1
         print('\nCross-validation iteration: {}'.format(iter))
-        train_index = train_index * len(datatrain.X) // len(datatest.X)
 
-        X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-        y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+        X_train, X_test = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
+        y_train, y_test = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
 
         # Create a data object similar to what dde.data.DataSet provides
         class Data:
@@ -356,6 +355,7 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     dataval.y = datatrain.y[v_ind]
     datatrain.X = datatrain.X[t_ind]
     datatrain.y = datatrain.y[t_ind]
+    longest = max([datatrain.y, datatest.y], key=len)
 
     if n_hi == 0: 
         train_size = 10
@@ -373,13 +373,12 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     mape = []
     iter = 0
-    for train_index, test_index in kf.split(datatest.X):
+    for train_index, test_index in kf.split(longest):
         iter += 1
         print('\nCross-validation iteration: {}'.format(iter))
-        train_index = train_index * len(datatrain.X) // len(datatest.X)
 
-        X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-        y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+        X_train, X_test = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
+        y_train, y_test = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
 
         data = dde.data.DataSet(
             X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
@@ -406,6 +405,7 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
     dataval.y = datahigh.y[v_ind]
     datahigh.X = datahigh.X[t_ind]
     datahigh.y = datahigh.y[t_ind]
+    longest = max([datalow.y, datahigh.y, datatest.y], key=len)
 
     datalow.y *= 1 + v_lo * np.random.normal(loc=0, scale=1, size=datalow.y.shape)
 
@@ -419,12 +419,12 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
             test_size=len(datatest.X) - train_size,
             random_state=0
         )
-        for train_index, test_index in kf.split(datatest.X):
+        for train_index, test_index in kf.split(longest):
             iter += 1
             print('\nCross-validation iteration: {}'.format(iter))
-            train_index = train_index * len(datalow.X) // len(datatest.X)
-            X_train, X_test = datalow.X[train_index], datatest.X[test_index]
-            y_train, y_test = datalow.y[train_index], datatest.y[test_index]
+            train_index = train_index*len(datalow.X)//len(longest)
+            X_train, X_test = datalow.X[train_index*len(datalow.X)//len(longest)], datatest.X[test_index*len(datalow.X)//len(longest)]
+            y_train, y_test = datalow.y[train_index*len(datalow.X)//len(longest)], datatest.y[test_index*len(datalow.X)//len(longest)]
             data = dde.data.DataSet(
                 X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
             )
@@ -439,20 +439,18 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
             test_size=test_size,
             random_state=0
         )
-        for train_index, test_index in kf.split(datatest.X):
+        for train_index, test_index in kf.split(longest):
             iter += 1
             print('\nIteration: {}'.format(iter), flush=True)
-            for i in range(len(train_index)):
-                train_index[i] = train_index[i] * len(datahigh.y) // len(datatest.y)
 
             lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
             data = dde.data.MfDataSet(
-                X_lo_train=datalow.X[lo_index],
-                X_hi_train=datahigh.X[train_index],
-                y_lo_train=datalow.y[lo_index],
-                y_hi_train=datahigh.y[train_index],
-                X_hi_test=datatest.X[test_index],
-                y_hi_test=datatest.y[test_index],
+                X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
+                X_hi_train=datahigh.X[train_index*len(datahigh.X)//len(longest)],
+                y_lo_train=datalow.y[lo_index*len(datalow.X)//len(longest)],
+                y_hi_train=datahigh.y[train_index*len(datahigh.X)//len(longest)],
+                X_hi_test=datatest.X[test_index*len(datatest.X)//len(longest)],
+                y_hi_test=datatest.y[test_index*len(datatest.X)//len(longest)],
                 standardize=True
             )
             mape.append(dde.utils.apply(mfnn, (data, lay, wid, 4, ))[0])
@@ -470,6 +468,7 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
     datahigh = FileData(trainhigh, yname)
     dataexp = FileData(trainexp, yname)
     datatest = FileData(testname, yname)
+    longest = max([datalow.y, datahigh.y, dataexp.y, datatest.y], key=len)
 
     n_vd = (int(n_vd * dataexp.X.shape[0])) if n_vd < 1 else int(n_vd)
     v_ind = np.random.choice(dataexp.X.shape[0], size=n_vd, replace=False)
@@ -494,34 +493,32 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
             random_state=0
         )
         if typ == 'hi':
-            for train_index, test_index in kf.split(datatest.X):
+            for train_index, test_index in kf.split(longest):
                 iter += 1
                 print('\nIteration: {}'.format(iter), flush=True)
-                for i in range(len(train_index)):
-                    train_index[i] = train_index[i] * len(datahigh.y) // len(datatest.y)
+
                 lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)  
                 data = dde.data.MfDataSet(
-                    X_lo_train=datalow.X[lo_index],
-                    X_hi_train=datahigh.X[train_index],
-                    y_lo_train=datalow.y[lo_index],
-                    y_hi_train=datahigh.y[train_index],
-                    X_hi_test=datatest.X[test_index],
-                    y_hi_test=datatest.y[test_index],
+                    X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
+                    X_hi_train=datahigh.X[train_index*len(datahigh.X)//len(longest)],
+                    y_lo_train=datalow.y[lo_index*len(datalow.X)//len(longest)],
+                    y_hi_train=datahigh.y[train_index*len(datahigh.X)//len(longest)],
+                    X_hi_test=datatest.X[test_index*len(datatest.X)//len(longest)],
+                    y_hi_test=datatest.y[test_index*len(datatest.X)//len(longest)],
                     standardize=True
                 )
                 ape.append(dde.utils.apply(mfnn, (data, lay, wid, 4, ))[0])
         else:
-            for train_index, test_index in kf.split(datatest.X):
+            for train_index, test_index in kf.split(longest):
                 iter += 1
                 print('\nCross-validation iteration: {}'.format(iter))
                 lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
                 hi_index = np.random.choice(datahigh.X.shape[0], size=n_hi, replace=False)
                 datatrain = datalow
-                datatrain.X = np.vstack((datalow.X[lo_index], datahigh.X[hi_index]))
-                datatrain.y = np.vstack((datalow.y[lo_index], datahigh.y[hi_index]))
-                train_index = train_index * len(datatrain.X) // len(datatest.X)
-                X_train, X_test = datatrain.X[train_index], datatest.X[test_index]
-                y_train, y_test = datatrain.y[train_index], datatest.y[test_index]
+                datatrain.X = np.vstack((datalow.X[lo_index*len(datalow.X)//len(longest)], datahigh.X[hi_index*len(datahigh.X)//len(longest)]))
+                datatrain.y = np.vstack((datalow.y[lo_index*len(datalow.X)//len(longest)], datahigh.y[hi_index*len(datahigh.X)//len(longest)]))
+                X_train, X_test = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
+                y_train, y_test = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
                 data = dde.data.DataSet(
                     X_train=X_train, y_train=y_train, X_test=X_test, y_test=y_test, standardize=True
                 )
@@ -535,26 +532,26 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
             test_size=test_size,
             random_state=0
         )
-        for train_index, _ in kf.split(dataexp.X):
+        for train_index, _ in kf.split(longest):
             print('\nIteration: {}'.format(len(ape)))
             lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
             hi_index = np.random.choice(datahigh.X.shape[0], size=n_hi, replace=False)
             if typ == 'hi':
                 data = dde.data.MfDataSet(
-                    X_lo_train=datalow.X[lo_index],
-                    X_hi_train=np.vstack((datahigh.X[hi_index], dataexp.X[train_index])),
-                    y_lo_train=datalow.y[lo_index],
-                    y_hi_train=np.vstack((datahigh.y[hi_index], dataexp.y[train_index])),
+                    X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
+                    X_hi_train=np.vstack((datahigh.X[hi_index*len(datahigh.X)//len(longest)], dataexp.X[train_index*len(datatrain.X)//len(longest)])),
+                    y_lo_train=datalow.y[lo_index**len(datalow.X)//len(longest)],
+                    y_hi_train=np.vstack((datahigh.y[hi_index*len(datahigh.X)//len(longest)], dataexp.y[train_index*len(datatrain.X)//len(longest)])),
                     X_hi_test=datatest.X,
                     y_hi_test=datatest.y,
                     standardize=True
                 )
             else:
                 data = dde.data.MfDataSet(
-                    X_lo_train=np.vstack((datalow.X[lo_index],datahigh.X[hi_index])),
-                    X_hi_train=dataexp.X[train_index],
-                    y_lo_train=np.vstack((datalow.y[lo_index],datahigh.y[hi_index])),
-                    y_hi_train=dataexp.y[train_index],
+                    X_lo_train=np.vstack((datalow.X[lo_index*len(datalow.X)//len(longest)],datahigh.X[hi_index*len(datahigh.X)//len(longest)])),
+                    X_hi_train=dataexp.X[train_index*len(datatrain.X)//len(longest)],
+                    y_lo_train=np.vstack((datalow.y[lo_index*len(datalow.X)//len(longest)],datahigh.y[hi_index*len(datahigh.X)//len(longest)])),
+                    y_hi_train=dataexp.y[train_index*len(datatrain.X)//len(longest)],
                     X_hi_test=datatest.X,
                     y_hi_test=datatest.y,
                     standardize=True
