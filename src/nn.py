@@ -247,10 +247,10 @@ class KANModel(tnn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
         super(KANModel, self).__init__()
         self.layers = tnn.ModuleList()
-        self.layers.append(kan.KAN(width=[input_dim, hidden_dim], grid=5, k=3))
+        self.layers.append(kan.KAN(width=[input_dim, hidden_dim], grid=3, k=3))
         for _ in range(num_layers - 1):
-            self.layers.append(kan.KAN(width=[hidden_dim, hidden_dim], grid=5, k=3))
-        self.layers.append(kan.KAN(width=[hidden_dim, output_dim], grid=5, k=3))
+            self.layers.append(kan.KAN(width=[hidden_dim, hidden_dim], grid=3, k=3))
+        self.layers.append(kan.KAN(width=[hidden_dim, output_dim], grid=3, k=3))
 
     def forward(self, x):
         for layer in self.layers:
