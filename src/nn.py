@@ -179,7 +179,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         print(f"Iteration {iter}")
 
         datatrain.X, datatest.X = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
-        datatrain.y, datatest.y = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
+        datatrain.y, datatest.y = datatrain.y[train_index*len(datatrain.y)//len(longest)], datatest.y[test_index*len(datatest.y)//len(longest)]
 
         if n_hi > 0:
             # Create the PDE problem
@@ -445,9 +445,9 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
 
             lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
             data = dde.data.MfDataSet(
-                X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
+                X_lo_train=datalow.X[lo_index],
                 X_hi_train=datahigh.X[train_index*len(datahigh.X)//len(longest)],
-                y_lo_train=datalow.y[lo_index*len(datalow.X)//len(longest)],
+                y_lo_train=datalow.y[lo_index],
                 y_hi_train=datahigh.y[train_index*len(datahigh.X)//len(longest)],
                 X_hi_test=datatest.X[test_index*len(datatest.X)//len(longest)],
                 y_hi_test=datatest.y[test_index*len(datatest.X)//len(longest)],
@@ -499,9 +499,9 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
 
                 lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)  
                 data = dde.data.MfDataSet(
-                    X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
+                    X_lo_train=datalow.X[lo_index],
                     X_hi_train=datahigh.X[train_index*len(datahigh.X)//len(longest)],
-                    y_lo_train=datalow.y[lo_index*len(datalow.X)//len(longest)],
+                    y_lo_train=datalow.y[lo_index],
                     y_hi_train=datahigh.y[train_index*len(datahigh.X)//len(longest)],
                     X_hi_test=datatest.X[test_index*len(datatest.X)//len(longest)],
                     y_hi_test=datatest.y[test_index*len(datatest.X)//len(longest)],
@@ -515,8 +515,8 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
                 lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
                 hi_index = np.random.choice(datahigh.X.shape[0], size=n_hi, replace=False)
                 datatrain = datalow
-                datatrain.X = np.vstack((datalow.X[lo_index*len(datalow.X)//len(longest)], datahigh.X[hi_index*len(datahigh.X)//len(longest)]))
-                datatrain.y = np.vstack((datalow.y[lo_index*len(datalow.X)//len(longest)], datahigh.y[hi_index*len(datahigh.X)//len(longest)]))
+                datatrain.X = np.vstack((datalow.X[lo_index], datahigh.X[hi_index]))
+                datatrain.y = np.vstack((datalow.y[lo_index], datahigh.y[hi_index]))
                 X_train, X_test = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
                 y_train, y_test = datatrain.y[train_index*len(datatrain.X)//len(longest)], datatest.y[test_index*len(datatest.X)//len(longest)]
                 data = dde.data.DataSet(
@@ -538,19 +538,19 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
             hi_index = np.random.choice(datahigh.X.shape[0], size=n_hi, replace=False)
             if typ == 'hi':
                 data = dde.data.MfDataSet(
-                    X_lo_train=datalow.X[lo_index*len(datalow.X)//len(longest)],
-                    X_hi_train=np.vstack((datahigh.X[hi_index*len(datahigh.X)//len(longest)], dataexp.X[train_index*len(datatrain.X)//len(longest)])),
-                    y_lo_train=datalow.y[lo_index**len(datalow.X)//len(longest)],
-                    y_hi_train=np.vstack((datahigh.y[hi_index*len(datahigh.X)//len(longest)], dataexp.y[train_index*len(datatrain.X)//len(longest)])),
+                    X_lo_train=datalow.X[lo_index],
+                    X_hi_train=np.vstack((datahigh.X[hi_index], dataexp.X[train_index*len(datatrain.X)//len(longest)])),
+                    y_lo_train=datalow.y[lo_index],
+                    y_hi_train=np.vstack((datahigh.y[hi_index], dataexp.y[train_index*len(datatrain.X)//len(longest)])),
                     X_hi_test=datatest.X,
                     y_hi_test=datatest.y,
                     standardize=True
                 )
             else:
                 data = dde.data.MfDataSet(
-                    X_lo_train=np.vstack((datalow.X[lo_index*len(datalow.X)//len(longest)],datahigh.X[hi_index*len(datahigh.X)//len(longest)])),
+                    X_lo_train=np.vstack((datalow.X[lo_index],datahigh.X[hi_index])),
                     X_hi_train=dataexp.X[train_index*len(datatrain.X)//len(longest)],
-                    y_lo_train=np.vstack((datalow.y[lo_index*len(datalow.X)//len(longest)],datahigh.y[hi_index*len(datahigh.X)//len(longest)])),
+                    y_lo_train=np.vstack((datalow.y[lo_index],datahigh.y[hi_index])),
                     y_hi_train=dataexp.y[train_index*len(datatrain.X)//len(longest)],
                     X_hi_test=datatest.X,
                     y_hi_test=datatest.y,
