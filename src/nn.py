@@ -163,7 +163,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         test_size = len(datatest.X) - train_size
     else:
         train_size = n_hi
-        test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+        test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
     kf = ShuffleSplit(
         n_splits=10,
@@ -308,7 +308,7 @@ def kan_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatrain.y = datatrain.y[t_ind]
 
     train_size = n_hi
-    test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+    test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
     kf = ShuffleSplit(
         n_splits=10,
@@ -362,7 +362,7 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         test_size = len(datatest.X) - train_size
     else:
         train_size = n_hi
-        test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
+        test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
     kf = ShuffleSplit(
         n_splits=10,
@@ -416,7 +416,7 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
         kf = ShuffleSplit(
             n_splits=10,
             train_size=10,
-            test_size=len(datatest.X) - train_size,
+            test_size=len(datatest.X) - 10,
             random_state=0
         )
         for train_index, test_index in kf.split(longest):
@@ -432,7 +432,7 @@ def mfnn_two(yname, testname, trainhigh, n_hi, trainlow, n_lo, v_lo=0, n_vd=0.2,
 
     else:
         train_size = n_hi
-        test_size = min(len(datahigh.X) - n_hi, len(datahigh.X) - train_size - 1)
+        test_size = max(5,min(len(datahigh.X) - n_hi, len(datahigh.X) - train_size - 1))
         kf = ShuffleSplit(
             n_splits=10,
             train_size=train_size,
@@ -468,7 +468,6 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
     datahigh = FileData(trainhigh, yname)
     dataexp = FileData(trainexp, yname)
     datatest = FileData(testname, yname)
-    longest = max([datalow.y, datahigh.y, dataexp.y, datatest.y], key=len)
 
     n_vd = (int(n_vd * dataexp.X.shape[0])) if n_vd < 1 else int(n_vd)
     v_ind = np.random.choice(dataexp.X.shape[0], size=n_vd, replace=False)
@@ -478,18 +477,20 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
     dataval.y = dataexp.y[v_ind]
     dataexp.X = dataexp.X[t_ind]
     dataexp.y = dataexp.y[t_ind]
+    longest = max([datalow.y, datahigh.y, dataexp.y, datatest.y], key=len)
 
     datalow.y *= 1 + v_lo * np.random.normal(loc=0, scale=1, size=datalow.y.shape)
     datahigh.y *= 1 + v_hi * np.random.normal(loc=0, scale=1, size=datahigh.y.shape)
 
     ape = []
     y = []
+    iter = 0
 
     if n_exp == 0:
         kf = ShuffleSplit(
             n_splits=10,
             train_size=10,
-            test_size=len(datatest.X) - train_size,
+            test_size=len(datatest.X) - 10,
             random_state=0
         )
         if typ == 'hi':
@@ -525,7 +526,7 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
                 ape.append(dde.utils.apply(nn, (data,lay,wid,)))
     else:
         train_size = n_hi
-        test_size = min(len(datahigh.X) - n_hi, len(datahigh.X) - train_size - 1)
+        test_size = max(5,min(len(datahigh.X) - n_hi, len(datahigh.X) - train_size - 1))
         kf = ShuffleSplit(
             n_splits=10,
             train_size=train_size,
@@ -536,6 +537,9 @@ def mfnn_three(yname, testname, trainexp, n_exp, trainhigh, n_hi, trainlow, n_lo
             print('\nIteration: {}'.format(len(ape)))
             lo_index = np.random.choice(datalow.X.shape[0], size=n_lo, replace=False)
             hi_index = np.random.choice(datahigh.X.shape[0], size=n_hi, replace=False)
+            datatrain = datalow
+            datatrain.X = np.vstack((datalow.X[lo_index], datahigh.X[hi_index]))
+            datatrain.y = np.vstack((datalow.y[lo_index], datahigh.y[hi_index]))
             if typ == 'hi':
                 data = dde.data.MfDataSet(
                     X_lo_train=datalow.X[lo_index],
