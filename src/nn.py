@@ -89,26 +89,26 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     Wp, Wm, Wa = max(model_data.X[:, 2]), min(model_data.X[:, 2]), (max(model_data.X[:, 2]) + min(model_data.X[:, 2]))/2
     hp, hm, ha = max(model_data.X[:, 3]), min(model_data.X[:, 3]), (max(model_data.X[:, 3]) + min(model_data.X[:, 3]))/2
     yp, ym, ya = max(model_data.y), min(model_data.y), (max(model_data.y) + min(model_data.y))/2
-    model_data.X[:, 0] = (model_data.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
-    model_data.X[:, 1] = (model_data.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
-    model_data.X[:, 2] = (model_data.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
-    model_data.X[:, 3] = (model_data.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    model_data.X[:, 0] = (model_data.X[:, 0]-Ca)/(Cp-Cm)
+    model_data.X[:, 1] = (model_data.X[:, 1]-Sa)/(Sp-Sm)
+    model_data.X[:, 2] = (model_data.X[:, 2]-Wa)/(Wp-Wm)
+    model_data.X[:, 3] = (model_data.X[:, 3]-ha)/(hp-hm)
     # model_data.y = (model_data.y-ym)/(yp-ym)
     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
     # geom = dde.geometry.Hypercube([Cm, Sm, Wm, hm], [Cp, Sp, Wp, hp])
     model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
     # Get experimental training and test data
     datatrain = FileData(trainname, yname)
-    datatrain.X[:, 0] = (datatrain.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
-    datatrain.X[:, 1] = (datatrain.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
-    datatrain.X[:, 2] = (datatrain.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
-    datatrain.X[:, 3] = (datatrain.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    datatrain.X[:, 0] = (datatrain.X[:, 0]-Ca)/(Cp-Cm)
+    datatrain.X[:, 1] = (datatrain.X[:, 1]-Sa)/(Sp-Sm)
+    datatrain.X[:, 2] = (datatrain.X[:, 2]-Wa)/(Wp-Wm)
+    datatrain.X[:, 3] = (datatrain.X[:, 3]-ha)/(hp-hm)
     # datatrain.y = (datatrain.y-ym)/(yp-ym)
     datatest = FileData(testname, yname)
-    datatest.X[:, 0] = (datatest.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
-    datatest.X[:, 1] = (datatest.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
-    datatest.X[:, 2] = (datatest.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
-    datatest.X[:, 3] = (datatest.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    datatest.X[:, 0] = (datatest.X[:, 0]-Ca)/(Cp-Cm)
+    datatest.X[:, 1] = (datatest.X[:, 1]-Sa)/(Sp-Sm)
+    datatest.X[:, 2] = (datatest.X[:, 2]-Wa)/(Wp-Wm)
+    datatest.X[:, 3] = (datatest.X[:, 3]-ha)/(hp-hm)
     # datatest.y = (datatest.y-ym)/(yp-ym)
     longest = max([datatrain.y, datatest.y], key=len)
 
@@ -121,10 +121,10 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     def pde(x, y):
         # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-        C = x[:, 0:1] * (Cp-Cm) + (Cp+Cm)/2
-        S = x[:, 1:2] * (Sp-Sm) + (Sp+Sm)/2
-        W = x[:, 2:3] * (Wp-Wm) + (Wp+Wm)/2
-        h = x[:, 3:4] * (hp-hm) + (hp+hm)/2
+        C = x[:, 0:1] * (Cp-Cm) + Ca
+        S = x[:, 1:2] * (Sp-Sm) + Sa
+        W = x[:, 2:3] * (Wp-Wm) + Wa
+        h = x[:, 3:4] * (hp-hm) + ha
 
         dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
         dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
