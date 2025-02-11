@@ -133,15 +133,15 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         
         $$$ Need to fix this still.
         if yname == 'sy':
-            return dy_dC - ((S**2 * (0.0102041 * C * h + 0.0136054 * S)) / ((S - 0.75 * C * h)**3)) / (Cp - Cm) + \
-                dy_dS - ((0.0483749 * C**2 * S * h) / ((C * h - S * 4/3)**3)) / (Sp - Sm) + \
-                dy_dW - 0 / (Wp - Wm) + \
-                dy_dh - ((-0.0483749 * C**2 * S**2) / ((C * h - S * 4/3)**3)) / (hp - hm)
+            return dy_dC - ((S**2 * (0.0102041 * C * h + 0.0136054 * S)) / ((S - 0.75 * C * h)**3)) * 2/(Cp - Cm) + \
+                dy_dS - ((0.0483749 * C**2 * S * h) / ((C * h - S * 4/3)**3)) * 2/(Sp - Sm) + \
+                dy_dW - 0 * 2/(Wp - Wm) + \
+                dy_dh - ((-0.0483749 * C**2 * S**2) / ((C * h - S * 4/3)**3)) * 2/(hp - hm)
         if yname == 'Er':
-            return dy_dC - 0 / (Cp-Cm) + \
-                dy_dS - (0.179045 / h) / (Sp - Sm) + \
-                dy_dW - 0 / (Wp - Wm) + \
-                dy_dh - (-0.179045 * S / h**2) / (hp - hm)
+            return dy_dC - 0 * 2/(Cp-Cm) + \
+                dy_dS - (0.179045 / h) * 2/(Sp - Sm) + \
+                dy_dW - 0 * 2/(Wp - Wm) + \
+                dy_dh - (-0.179045 * S / h**2) * 2/(hp - hm)
 
     kf = ShuffleSplit(
         # n_splits=10,
