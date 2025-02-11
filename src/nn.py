@@ -81,83 +81,37 @@ def mfnn(data, lay, wid, xdim):
         train_state.best_y[1],
     )
 
-def pde_Er(x, y):
-    # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-    # Er=sqrt(pi)(dP/dh)/(2hmax\sqrt(24.5))
-    # x0 = 0
-    x1 = x[:,1]
-    # x2 = 0
-    x3 = x[:,3]
-    return 1e-3*np.sqrt(np.pi) * x1 / (2 * x3 * np.sqrt(24.5)) - y
-
-def pde_sy(x, y):
-    # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-    # sy=Pm/3Ac=Pm/73.5hm^2=C/73.5
-    x0 = x[:,0]
-    # x1 = 0
-    # x2 = 0
-    # x3 = 0
-    return x0/73.5 - y 
-
-def sol_Er(x):
-    return 1e-3*np.sqrt(np.pi) * x[1] / (2 * x[3] * np.sqrt(24.5))
-
-def sol_sy(x):
-    return x[0] / 73.5
-
-# Generate "physical model" training data
-def gen_traindata(num, yname):
-    C_l, C_h = 2.5, 250
-    dPdh_l, dPdh_h = 10000, 300000
-    WpWt_l, WpWt_h = 0.4, 0.9
-    hm_l, hm_h = 0.1, 0.4
-    x1 = np.linspace(C_l, C_h, num)
-    x2 = np.linspace(dPdh_l, dPdh_h, num)
-    x3 = np.linspace(WpWt_l, WpWt_h, num)
-    x4 = np.linspace(hm_l, hm_h, num)
-    X = np.column_stack((x1, x2, x3, x4))
-    
-    if yname == 'Er':
-        Y = 1e-3*np.sqrt(np.pi)*x2/(2*x4*np.sqrt(24.5))
-    if yname == 'sy':
-        Y = x1 / 73.5
-    return X, Y
-
-class TestCallback(dde.callbacks.Callback):
-    def __init__(self, X_test, y_test, period=1000):
-        super().__init__()
-        self.X_test = X_test
-        self.y_test = y_test
-        self.period = period
-        self.test_errors = []
-        self.current_epoch = 0
-
-    def on_epoch_end(self):
-        self.current_epoch += 1
-        if self.current_epoch % self.period == 0:
-            y_pred = self.model.predict(self.X_test)
-            error = np.mean(np.abs((self.y_test - y_pred) / self.y_test)) * 100
-            self.test_errors.append(error)
-
 def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
-    # Generate model data
+    # Retrieve model data
+    model_data = FileData('model', yname)
+    Cp, Cm, Ca = max(model_data.X[:, 0]), min(model_data.X[:, 0]), (max(model_data.X[:, 0]) + min(model_data.X[:, 0]))/2
+    Sp, Sm, Sa = max(model_data.X[:, 1]), min(model_data.X[:, 1]), (max(model_data.X[:, 1]) + min(model_data.X[:, 1]))/2
+    Wp, Wm, Wa = max(model_data.X[:, 2]), min(model_data.X[:, 2]), (max(model_data.X[:, 2]) + min(model_data.X[:, 2]))/2
+    hp, hm, ha = max(model_data.X[:, 3]), min(model_data.X[:, 3]), (max(model_data.X[:, 3]) + min(model_data.X[:, 3]))/2
+    yp, ym, ya = max(model_data.y), min(model_data.y), (max(model_data.y) + min(model_data.y))/2
+    model_data.X[:, 0] = (model_data.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
+    model_data.X[:, 1] = (model_data.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
+    model_data.X[:, 2] = (model_data.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
+    model_data.X[:, 3] = (model_data.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    # model_data.y = (model_data.y-ym)/(yp-ym)
     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
-    X_model, y_model = gen_traindata(1000, yname)
-    generated = dde.icbc.PointSetBC(X_model, y_model, component=0)
-
-    if yname == 'Er':
-        bc = dde.icbc.DirichletBC(geom, sol_Er, lambda _, on_boundary: on_boundary, component=0)
-    if yname == 'sy':
-        bc = dde.icbc.DirichletBC(geom, sol_sy, lambda _, on_boundary: on_boundary, component=0)
-    
+    # geom = dde.geometry.Hypercube([Cm, Sm, Wm, hm], [Cp, Sp, Wp, hp])
+    model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
     # Get experimental training and test data
     datatrain = FileData(trainname, yname)
+    datatrain.X[:, 0] = (datatrain.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
+    datatrain.X[:, 1] = (datatrain.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
+    datatrain.X[:, 2] = (datatrain.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
+    datatrain.X[:, 3] = (datatrain.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    # datatrain.y = (datatrain.y-ym)/(yp-ym)
     datatest = FileData(testname, yname)
+    datatest.X[:, 0] = (datatest.X[:, 0]-(Cp+Cm)/2)/(Cp-Cm)
+    datatest.X[:, 1] = (datatest.X[:, 1]-(Sp+Sm)/2)/(Sp-Sm)
+    datatest.X[:, 2] = (datatest.X[:, 2]-(Wp+Wm)/2)/(Wp-Wm)
+    datatest.X[:, 3] = (datatest.X[:, 3]-(hp+hm)/2)/(hp-hm)
+    # datatest.y = (datatest.y-ym)/(yp-ym)
     longest = max([datatrain.y, datatest.y], key=len)
 
-    # Define boundary condition using experimental data
-    datafile = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
-    
     if n_hi == 0: 
         train_size = 10
         test_size = len(datatest.X) - train_size
@@ -165,8 +119,33 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1)
 
+    def pde(x, y):
+        # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
+        C = x[:, 0:1] * (Cp-Cm) + (Cp+Cm)/2
+        S = x[:, 1:2] * (Sp-Sm) + (Sp+Sm)/2
+        W = x[:, 2:3] * (Wp-Wm) + (Wp+Wm)/2
+        h = x[:, 3:4] * (hp-hm) + (hp+hm)/2
+
+        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
+        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
+        dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
+        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
+        
+        $$$ Need to fix this still.
+        if yname == 'sy':
+            return dy_dC - ((S**2 * (0.0102041 * C * h + 0.0136054 * S)) / ((S - 0.75 * C * h)**3)) / (Cp - Cm) + \
+                dy_dS - ((0.0483749 * C**2 * S * h) / ((C * h - S * 4/3)**3)) / (Sp - Sm) + \
+                dy_dW - 0 / (Wp - Wm) + \
+                dy_dh - ((-0.0483749 * C**2 * S**2) / ((C * h - S * 4/3)**3)) / (hp - hm)
+        if yname == 'Er':
+            return dy_dC - 0 / (Cp-Cm) + \
+                dy_dS - (0.179045 / h) / (Sp - Sm) + \
+                dy_dW - 0 / (Wp - Wm) + \
+                dy_dh - (-0.179045 * S / h**2) / (hp - hm)
+
     kf = ShuffleSplit(
-        n_splits=10,
+        # n_splits=10,
+        n_splits=1,
         train_size=train_size,
         test_size=test_size,
         random_state=0
@@ -174,6 +153,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     mape = []
     iter = 0
+
     for train_index, test_index in kf.split(longest):
         iter += 1
         print(f"Iteration {iter}")
@@ -181,62 +161,33 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         datatrain.X, datatest.X = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
         datatrain.y, datatest.y = datatrain.y[train_index*len(datatrain.y)//len(longest)], datatest.y[test_index*len(datatest.y)//len(longest)]
 
-        if n_hi > 0:
-            # Create the PDE problem
-            if yname == 'Er':
-                data = dde.data.PDE(
-                    geom,
-                    pde_Er,
-                    [bc, generated, datafile],
-                    num_domain=100,
-                    num_boundary=100,
-                    num_test=100,
-                )
-            if yname == 'sy':
-                data = dde.data.PDE(
-                    geom,
-                    pde_sy,
-                    [bc, generated, datafile],
-                    num_domain=100,
-                    num_boundary=100,
-                    num_test=100,
-                )
-        else:
-            if yname == 'Er':
-                data = dde.data.PDE(
-                    geom,
-                    pde_Er,
-                    [bc, generated],
-                    num_domain=100,
-                    num_boundary=100,
-                    num_test=100,
-                )
-            if yname == 'sy':
-                data = dde.data.PDE(
-                    geom,
-                    pde_sy,
-                    [bc, generated],
-                    num_domain=100,
-                    num_boundary=100,
-                    num_test=100,
-                )
-    
+        # Define boundary condition using experimental data
+        train_data = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
+
+        # Create the PDE problem
+        data = dde.data.PDE(
+            geom,
+            pde,
+            # [train_data],
+            [model_data, train_data],
+            num_boundary=n_hi,
+            num_test=10,
+        )
+            
         # Define neural network
         layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
-        activation = 'tanh'
+        activation = 'selu'#tanh'
         initializer = 'Glorot uniform'
         net = dde.maps.FNN(layer_size, activation, initializer)
         model = dde.Model(data, net)
         model.compile("adam", lr=0.001)
-        test_callback = TestCallback(datatest.X, datatest.y, period=1000)
-        losshistory, train_state = model.train(epochs=30000, callbacks=[test_callback])
+        _, _ = model.train(epochs=30000)
 
         # Calculate final mean percent error
         y_pred = model.predict(datatest.X)
         mape.append(np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100)
 
-    print(f"Mean percent error: {np.mean(mape)}±{np.std(mape)}%")
-
+    print('pinn_one ' + yname + ' ' + str(np.mean(mape)) + ' ' + str(np.std(mape)) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
     with open('output.txt', 'a') as f:
         f.write('pinn_one ' + yname + ' ' + str(np.mean(mape)) + ' ' + str(np.std(mape)) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
 
