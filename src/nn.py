@@ -130,6 +130,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
+    # This older version of the pde had huge errors all around.
     # def pde(x, y):
     #     # Convert natural coordinates back to original form
     #     y1 = y
@@ -169,6 +170,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     #        dy_dS - dydS + \
     #        dy_dW - dydW + \
     #        dy_dh - dydh
+    # This next oldest version of the pde reaches the expected level of accuracy with a few training points but is still super inaccurte at the beginning.
     def pde(x, y):
         # Convert natural coordinates back to original form
         y1 = y * yr + ya
