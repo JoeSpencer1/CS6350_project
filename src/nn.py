@@ -18,6 +18,7 @@ import torch
 import torch.nn as tnn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
+import sympy as sp
 
 global apeG, yG
 
@@ -84,33 +85,43 @@ def mfnn(data, lay, wid, xdim):
 def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     # Retrieve model data
     model_data = FileData('model', yname)
-    Cp, Cm, Ca = max(model_data.X[:, 0]), min(model_data.X[:, 0]), (max(model_data.X[:, 0]) + min(model_data.X[:, 0]))/2
-    Sp, Sm, Sa = max(model_data.X[:, 1]), min(model_data.X[:, 1]), (max(model_data.X[:, 1]) + min(model_data.X[:, 1]))/2
-    Wp, Wm, Wa = max(model_data.X[:, 2]), min(model_data.X[:, 2]), (max(model_data.X[:, 2]) + min(model_data.X[:, 2]))/2
-    hp, hm, ha = max(model_data.X[:, 3]), min(model_data.X[:, 3]), (max(model_data.X[:, 3]) + min(model_data.X[:, 3]))/2
-    yp, ym, ya = max(model_data.y), min(model_data.y), (max(model_data.y) + min(model_data.y))/2
-    model_data.X[:, 0] = (model_data.X[:, 0]-Ca)/(Cp-Cm)
-    model_data.X[:, 1] = (model_data.X[:, 1]-Sa)/(Sp-Sm)
-    model_data.X[:, 2] = (model_data.X[:, 2]-Wa)/(Wp-Wm)
-    model_data.X[:, 3] = (model_data.X[:, 3]-ha)/(hp-hm)
-    # model_data.y = (model_data.y-ym)/(yp-ym)
+    datatrain = FileData(trainname, yname)
+    datatest = FileData(testname, yname)
     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
     # geom = dde.geometry.Hypercube([Cm, Sm, Wm, hm], [Cp, Sp, Wp, hp])
-    model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
+    # geom = dde.geometry.Hypercube([0, 0, 0, 0], [1, 1, 1, 1])
+    Cp, Cm = max(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0]))), min(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0])))
+    Sp, Sm = max(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1]))), min(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1])))
+    Wp, Wm = max(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2]))), min(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2])))
+    hp, hm = max(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3]))), min(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3])))
+    yp, ym = max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))
+    Cr, Ca = (Cp-Cm)/2, (Cp+Cm)/2
+    Sr, Sa = (Sp-Sm)/2, (Sp+Sm)/2
+    Wr, Wa = (Wp-Wm)/2, (Wp+Wm)/2
+    hr, ha = (hp-hm)/2, (hp+hm)/2
+    yr, ya = (yp-ym)/2, (yp+ym)/2
+    # Ca, Sa, Wa, ha, ya = (Cp + Cm)/2, (Sp + Sm)/2, (Wp + Wm)/2, (hp + hm)/2, (yp + ym)/2
+    model_data.X[:, 0] = (model_data.X[:, 0]-Ca)/Cr
+    model_data.X[:, 1] = (model_data.X[:, 1]-Sa)/Sr
+    model_data.X[:, 2] = (model_data.X[:, 2]-Wa)/Wr
+    model_data.X[:, 3] = (model_data.X[:, 3]-ha)/hr
+    model_data.y = (model_data.y-ya)/yr
     # Get experimental training and test data
-    datatrain = FileData(trainname, yname)
-    datatrain.X[:, 0] = (datatrain.X[:, 0]-Ca)/(Cp-Cm)
-    datatrain.X[:, 1] = (datatrain.X[:, 1]-Sa)/(Sp-Sm)
-    datatrain.X[:, 2] = (datatrain.X[:, 2]-Wa)/(Wp-Wm)
-    datatrain.X[:, 3] = (datatrain.X[:, 3]-ha)/(hp-hm)
-    # datatrain.y = (datatrain.y-ym)/(yp-ym)
-    datatest = FileData(testname, yname)
-    datatest.X[:, 0] = (datatest.X[:, 0]-Ca)/(Cp-Cm)
-    datatest.X[:, 1] = (datatest.X[:, 1]-Sa)/(Sp-Sm)
-    datatest.X[:, 2] = (datatest.X[:, 2]-Wa)/(Wp-Wm)
-    datatest.X[:, 3] = (datatest.X[:, 3]-ha)/(hp-hm)
-    # datatest.y = (datatest.y-ym)/(yp-ym)
+    datatrain.X[:, 0] = (datatrain.X[:, 0]-Ca)/Cr
+    datatrain.X[:, 1] = (datatrain.X[:, 1]-Sa)/Sr
+    datatrain.X[:, 2] = (datatrain.X[:, 2]-Wa)/Wr
+    datatrain.X[:, 3] = (datatrain.X[:, 3]-ha)/hr
+    datatrain.y = (datatrain.y-ya)/yr
+    datatest.X[:, 0] = (datatest.X[:, 0]-Ca)/Cr
+    datatest.X[:, 1] = (datatest.X[:, 1]-Sa)/Sr
+    datatest.X[:, 2] = (datatest.X[:, 2]-Wa)/Wr
+    datatest.X[:, 3] = (datatest.X[:, 3]-ha)/hr
+    datatest.y = (datatest.y-ya)/yr
     longest = max([datatrain.y, datatest.y], key=len)
+    print('Cp = {}, Sp = {}, Wp = {}, hp = {}, yp = {}'.format(Cp, Sp, Wp, hp, yp))
+    print('Cm = {}, Sm = {}, Wm = {}, hm = {}, ym = {}'.format(Cm, Sm, Wm, hm, ym))
+    print('{}, {}'.format(max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))))
+    model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
 
     if n_hi == 0: 
         train_size = 10
@@ -119,30 +130,72 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
-    def pde(x, y):
-        # x1 = C, x2 = dP/dh, x3 = Wp/Wt, x4 = hm
-        C = x[:, 0:1] * (Cp-Cm) + Ca
-        S = x[:, 1:2] * (Sp-Sm) + Sa
-        W = x[:, 2:3] * (Wp-Wm) + Wa
-        h = x[:, 3:4] * (hp-hm) + ha
+    # def pde(x, y):
+    #     # Convert natural coordinates back to original form
+    #     y1 = y
+    #     y1[:]=y1[:]*yr+ya
+    #     x1 = x
+    #     x1[:,0]=x1[:,0]*Cr+Ca
+    #     x1[:,1]=x1[:,1]*Sr+Sa
+    #     x1[:,2]=x1[:,2]*Wr+Wa
+    #     x1[:,3]=x1[:,3]*hr+ha
 
-        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
-        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
-        dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
-        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
+    #     # Partial derivatives in physical coordinate plane
+    #     if yname == 'Er':
+    #         dydC = 0.23801*x1[:,1]**2*x1[:,3]**2/(x1[:,1]*x1[:,3]-750*x1[:,0]*x[:,1]**2)**2
+    #         dydS = 3.1e-4*x1[:,3]**2*(x1[:,3]-1500*x1[:,0]*x1[:,1])/(x1[:,1]*x1[:,3]-750*x1[:,0]*x1[:,1]**2)**2
+    #         dydW = 0
+    #         dydh = 0.00031*x1[:,3]*(1500*x1[:,0]*x1[:,1]**2+x1[:,1]*x1[:,3])/(x1[:,1]*x1[:,3]-750*x1[:,0]*x1[:,1]**2)**2
+    #     if yname == 'sy':
+    #         dydC = 0.01360*x1[:,3]**2*(-562500*x1[:,0]**2*x1[:,1]**2+x1[:,3]**2)/(x1[:,3]-750*x1[:,0]*x1[:,1])**4
+    #         dydS = 20.40816*x1[:,0]**2*x1[:,3]**2/(x1[:,3]-750*x1[:,0]*x1[:,1])**3
+    #         dydW = 0
+    #         dydh = 20.40816*x1[:,0]**2*x1[:,1]*x1[:,3]/(x1[:,3]-750*x1[:,0]*x1[:,1])**3
         
-        $$$ Need to fix this still.
-        if yname == 'sy':
-            return dy_dC - ((S**2 * (0.0102041 * C * h + 0.0136054 * S)) / ((S - 0.75 * C * h)**3)) * 2/(Cp - Cm) + \
-                dy_dS - ((0.0483749 * C**2 * S * h) / ((C * h - S * 4/3)**3)) * 2/(Sp - Sm) + \
-                dy_dW - 0 * 2/(Wp - Wm) + \
-                dy_dh - ((-0.0483749 * C**2 * S**2) / ((C * h - S * 4/3)**3)) * 2/(hp - hm)
-        if yname == 'Er':
-            return dy_dC - 0 * 2/(Cp-Cm) + \
-                dy_dS - (0.179045 / h) * 2/(Sp - Sm) + \
-                dy_dW - 0 * 2/(Wp - Wm) + \
-                dy_dh - (-0.179045 * S / h**2) * 2/(hp - hm)
+    #     # Convert back to natural coordinate space
+    #     dydC *= yr/Cr
+    #     dydS *= yr/Sr
+    #     dydW *= yr/Wr
+    #     dydh *= yr/hr
 
+    #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
+    #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
+    #     dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
+    #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
+        
+    #     # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
+    #     # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
+    #     return dy_dC - dydC + \
+    #        dy_dS - dydS + \
+    #        dy_dW - dydW + \
+    #        dy_dh - dydh
+    def pde(x, y):
+        # Convert natural coordinates back to original form
+        y1 = y * yr + ya
+        x1_C = x[:, 0] * Cr + Ca
+        x1_S = x[:, 1] * Sr + Sa
+        x1_W = x[:, 2] * Wr + Wa
+        x1_h = x[:, 3] * hr + ha
+
+        # Partial derivatives in physical coordinate plane
+        if yname == 'Er':
+            dydC = 0.23801 * x1_S**2 * x1_h**2 / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+            dydS = 3.1e-4 * x1_h**2 * (x1_h - 1500 * x1_C * x1_S) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+            dydW = tf.zeros_like(x1_W)
+            dydh = 0.00031 * x1_h * (1500 * x1_C * x1_S**2 + x1_S * x1_h) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+        elif yname == 'sy':
+            dydC = 0.01360 * x1_h**2 * (-562500 * x1_C**2 * x1_S**2 + x1_h**2) / (x1_h - 750 * x1_C * x1_S)**4
+            dydS = 20.40816 * x1_C**2 * x1_h**2 / (x1_h - 750 * x1_C * x1_S)**3
+            dydW = tf.zeros_like(x1_W)
+            dydh = 20.40816 * x1_C**2 * x1_S * x1_h / (x1_h - 750 * x1_C * x1_S)**3
+
+        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
+        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
+        dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
+        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
+        
+        return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
+        
     kf = ShuffleSplit(
         # n_splits=10,
         n_splits=1,
@@ -176,7 +229,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
             
         # Define neural network
         layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
-        activation = 'selu'#tanh'
+        activation = 'selu'#'tanh'
         initializer = 'Glorot uniform'
         net = dde.maps.FNN(layer_size, activation, initializer)
         model = dde.Model(data, net)

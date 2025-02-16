@@ -95,7 +95,7 @@ def gen_forward():
                 continue
 
             _, C, _, dPdh, WpWt, _ = forward_model(E * 1e9, n, sy * 1e9, nu, hm=hm)
-            writer.writerow([n, Er, sy, C / 1e9, dPdh, WpWt, hm])
+            writer.writerow([n, Er, sy, C / 1e9, dPdh, WpWt, hm * 1e6])
 
 def test_inverse(filename):
     nu = 0.3

@@ -312,3 +312,161 @@ pinn_one sy 18263.176110490967 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
 
 pinn_one sy 15194.05752798187 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
 
+pinn_one sy 60234.06343611027 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 285714.55782245164 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 3184952.669511099 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+pinn_one sy 19813675.49946865 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 521839.7105037552 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 3677005.387079193 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+pinn_one sy 12363483.862852132 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+
+
+
+pinn_one sy 193.97850780780718 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er 20665634.752010606 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er 21466.245467830056 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er 64.9086798269246 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 621.0768631365834 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 162.21940868170003 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 559.2311078530182 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 50.410913810747445 0.0 Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 562.6283885186855 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 185.515047809571 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+
+pinn_one sy 868.785808891869 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 4.1530698224297105 0.0 Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 60.77723605392923 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+pinn_one Er 91.83235978079615 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one Er 782.4691384734891 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 574.1188252185657 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 223.16556554681762 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 4.175913930989788 0.0 Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 462.3195144937098 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 3.847430076008114 0.0 Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 90.38487136386976 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er 86.82445790365752 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one Er 1830.4170449041515 0.0 Ti-6Al-4V Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er 36.767057927241005 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one Er 54575.16183013952 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+
+pinn_one sy 416.35126091231206 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 202.24512225186203 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one sy 486.35561546436986 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 112.85326991198754 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+pinn_one sy 478.8914588679159 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one sy 439.7004181903845 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er 116153.76247900563 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 4731.870580505841 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+
+pinn_one sy nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+pinn_one sy nan nan [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one sy 209.0361210526354 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+pinn_one Er 121605.15000118266 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+
+
+
+
+
+
+
+
+
+
+pinn_one Er 150.53876523864608 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er 1039.804436944945 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one Er 4144.344114518901 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+
+pinn_one sy 400.73150664486894 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one sy 912.3770111195279 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 3842.293207133763 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+
+
+
+
+
+pinn_one Er 18.314772622403357 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one Er 53.32957211093722 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one Er 2751.130249657627 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+
+pinn_one sy 21.507152066505594 0.0 [Al7075,Al6061] Ti-6Al-4V 10 0.2 2 32
+pinn_one sy 666.5480425431236 0.0 [Al7075,Al6061] Ti-6Al-4V 5 0.2 2 32
+pinn_one sy 3556.64582963054 0.0 [Al7075,Al6061] Ti-6Al-4V 0 0.2 2 32
+
