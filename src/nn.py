@@ -121,7 +121,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     print('Cp = {}, Sp = {}, Wp = {}, hp = {}, yp = {}'.format(Cp, Sp, Wp, hp, yp))
     print('Cm = {}, Sm = {}, Wm = {}, hm = {}, ym = {}'.format(Cm, Sm, Wm, hm, ym))
     print('{}, {}'.format(max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))))
-    model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
+    # model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
 
     if n_hi == 0: 
         train_size = 10
@@ -170,37 +170,70 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     #        dy_dS - dydS + \
     #        dy_dW - dydW + \
     #        dy_dh - dydh
-    # This next oldest version of the pde reaches the expected level of accuracy with a few training points but is still super inaccurte at the beginning.
+
+
+    # # This next oldest version of the pde reaches the expected level of accuracy with a few training points but is still super inaccurte at the beginning.
+    # def pde(x, y):
+    #     # Convert natural coordinates back to original form
+    #     y1 = y * yr + ya
+    #     x1_C = x[:, 0] * Cr + Ca
+    #     x1_S = x[:, 1] * Sr + Sa
+    #     x1_W = x[:, 2] * Wr + Wa
+    #     x1_h = x[:, 3] * hr + ha
+
+    #     # Partial derivatives in physical coordinate plane
+    #     if yname == 'Er':
+    #         dydC = 0.23801 * x1_S**2 * x1_h**2 / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+    #         dydS = 3.1e-4 * x1_h**2 * (x1_h - 1500 * x1_C * x1_S) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+    #         dydW = tf.zeros_like(x1_W)
+    #         dydh = 0.00031 * x1_h * (1500 * x1_C * x1_S**2 + x1_S * x1_h) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+    #     elif yname == 'sy':
+    #         dydC = 0.01360 * x1_h**2 * (-562500 * x1_C**2 * x1_S**2 + x1_h**2) / (x1_h - 750 * x1_C * x1_S)**4
+    #         dydS = 20.40816 * x1_C**2 * x1_h**2 / (x1_h - 750 * x1_C * x1_S)**3
+    #         dydW = tf.zeros_like(x1_W)
+    #         dydh = 20.40816 * x1_C**2 * x1_S * x1_h / (x1_h - 750 * x1_C * x1_S)**3
+
+    #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
+    #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
+    #     dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
+    #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
+        
+    #     return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
+
+    
+    # This is the most recent version of the pde
     def pde(x, y):
         # Convert natural coordinates back to original form
+        # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
+        # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
         y1 = y * yr + ya
         x1_C = x[:, 0] * Cr + Ca
         x1_S = x[:, 1] * Sr + Sa
-        x1_W = x[:, 2] * Wr + Wa
+        # x1_W = x[:, 2] * Wr + Wa
         x1_h = x[:, 3] * hr + ha
 
         # Partial derivatives in physical coordinate plane
         if yname == 'Er':
             dydC = 0.23801 * x1_S**2 * x1_h**2 / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
             dydS = 3.1e-4 * x1_h**2 * (x1_h - 1500 * x1_C * x1_S) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
-            dydW = tf.zeros_like(x1_W)
+            # dydW = tf.zeros_like(x1_W)
             dydh = 0.00031 * x1_h * (1500 * x1_C * x1_S**2 + x1_S * x1_h) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
         elif yname == 'sy':
             dydC = 0.01360 * x1_h**2 * (-562500 * x1_C**2 * x1_S**2 + x1_h**2) / (x1_h - 750 * x1_C * x1_S)**4
             dydS = 20.40816 * x1_C**2 * x1_h**2 / (x1_h - 750 * x1_C * x1_S)**3
-            dydW = tf.zeros_like(x1_W)
+            # dydW = tf.zeros_like(x1_W)
             dydh = 20.40816 * x1_C**2 * x1_S * x1_h / (x1_h - 750 * x1_C * x1_S)**3
 
         dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
         dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
-        dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
+        # dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
         dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
         
         return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
         
     kf = ShuffleSplit(
-        # n_splits=10,
-        n_splits=1,
+        n_splits=10,
+        # n_splits=1,
         train_size=train_size,
         test_size=test_size,
         random_state=0
@@ -208,14 +241,21 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
     mape = []
     iter = 0
+    datatrain_og = datatrain
+    datatest_og = datatest
+    model_data_og = model_data
 
     for train_index, test_index in kf.split(longest):
         iter += 1
         print(f"Iteration {iter}")
 
-        datatrain.X, datatest.X = datatrain.X[train_index*len(datatrain.X)//len(longest)], datatest.X[test_index*len(datatest.X)//len(longest)]
-        datatrain.y, datatest.y = datatrain.y[train_index*len(datatrain.y)//len(longest)], datatest.y[test_index*len(datatest.y)//len(longest)]
+        datatrain.X, datatest.X = datatrain_og.X[train_index*len(datatrain.X)//len(longest)], datatest_og.X[test_index*len(datatest.X)//len(longest)]
+        datatrain.y, datatest.y = datatrain_og.y[train_index*len(datatrain.y)//len(longest)], datatest_og.y[test_index*len(datatest.y)//len(longest)]
+        model_indices = np.random.choice(model_data_og.X.shape[0], size=20, replace=False)
+        model_data.X, model_data.y = model_data_og.X[model_indices], model_data_og.y[model_indices]
 
+        # Define boundary condition using model data
+        model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
         # Define boundary condition using experimental data
         train_data = dde.icbc.PointSetBC(datatrain.X, datatrain.y, component=0)
 
