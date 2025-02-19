@@ -130,110 +130,74 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
-    # This older version of the pde had huge errors all around.
+    
+    # # This is the most recent version of the pde
     # def pde(x, y):
     #     # Convert natural coordinates back to original form
-    #     y1 = y
-    #     y1[:]=y1[:]*yr+ya
-    #     x1 = x
-    #     x1[:,0]=x1[:,0]*Cr+Ca
-    #     x1[:,1]=x1[:,1]*Sr+Sa
-    #     x1[:,2]=x1[:,2]*Wr+Wa
-    #     x1[:,3]=x1[:,3]*hr+ha
-
-    #     # Partial derivatives in physical coordinate plane
-    #     if yname == 'Er':
-    #         dydC = 0.23801*x1[:,1]**2*x1[:,3]**2/(x1[:,1]*x1[:,3]-750*x1[:,0]*x[:,1]**2)**2
-    #         dydS = 3.1e-4*x1[:,3]**2*(x1[:,3]-1500*x1[:,0]*x1[:,1])/(x1[:,1]*x1[:,3]-750*x1[:,0]*x1[:,1]**2)**2
-    #         dydW = 0
-    #         dydh = 0.00031*x1[:,3]*(1500*x1[:,0]*x1[:,1]**2+x1[:,1]*x1[:,3])/(x1[:,1]*x1[:,3]-750*x1[:,0]*x1[:,1]**2)**2
-    #     if yname == 'sy':
-    #         dydC = 0.01360*x1[:,3]**2*(-562500*x1[:,0]**2*x1[:,1]**2+x1[:,3]**2)/(x1[:,3]-750*x1[:,0]*x1[:,1])**4
-    #         dydS = 20.40816*x1[:,0]**2*x1[:,3]**2/(x1[:,3]-750*x1[:,0]*x1[:,1])**3
-    #         dydW = 0
-    #         dydh = 20.40816*x1[:,0]**2*x1[:,1]*x1[:,3]/(x1[:,3]-750*x1[:,0]*x1[:,1])**3
-        
-    #     # Convert back to natural coordinate space
-    #     dydC *= yr/Cr
-    #     dydS *= yr/Sr
-    #     dydW *= yr/Wr
-    #     dydh *= yr/hr
-
-    #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
-    #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
-    #     dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
-    #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
-        
     #     # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
     #     # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
-    #     return dy_dC - dydC + \
-    #        dy_dS - dydS + \
-    #        dy_dW - dydW + \
-    #        dy_dh - dydh
-
-
-    # # This next oldest version of the pde reaches the expected level of accuracy with a few training points but is still super inaccurte at the beginning.
-    # def pde(x, y):
-    #     # Convert natural coordinates back to original form
     #     y1 = y * yr + ya
-    #     x1_C = x[:, 0] * Cr + Ca
-    #     x1_S = x[:, 1] * Sr + Sa
-    #     x1_W = x[:, 2] * Wr + Wa
-    #     x1_h = x[:, 3] * hr + ha
+    #     _C = x[:, 0] * Cr + Ca
+    #     _S = x[:, 1] * Sr + Sa
+    #     _h = x[:, 3] * hr + ha
 
     #     # Partial derivatives in physical coordinate plane
     #     if yname == 'Er':
-    #         dydC = 0.23801 * x1_S**2 * x1_h**2 / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
-    #         dydS = 3.1e-4 * x1_h**2 * (x1_h - 1500 * x1_C * x1_S) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
-    #         dydW = tf.zeros_like(x1_W)
-    #         dydh = 0.00031 * x1_h * (1500 * x1_C * x1_S**2 + x1_S * x1_h) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+    #         dydC = 0.23801 * _S**2 * _h**2 / (_S * _h - 750 * _C * _S**2)**2
+    #         dydS = 3.1e-4 * _h**2 * (_h - 1500 * _C * _S) / (_S * _h - 750 * _C * _S**2)**2
+    #         dydh = 0.00031 * _h * (1500 * _C * _S**2 + _S * _h) / (_S * _h - 750 * _C * _S**2)**2
     #     elif yname == 'sy':
-    #         dydC = 0.01360 * x1_h**2 * (-562500 * x1_C**2 * x1_S**2 + x1_h**2) / (x1_h - 750 * x1_C * x1_S)**4
-    #         dydS = 20.40816 * x1_C**2 * x1_h**2 / (x1_h - 750 * x1_C * x1_S)**3
-    #         dydW = tf.zeros_like(x1_W)
-    #         dydh = 20.40816 * x1_C**2 * x1_S * x1_h / (x1_h - 750 * x1_C * x1_S)**3
+    #         dydC = 0.01360 * _h**2 * (-562500 * _C**2 * _S**2 + _h**2) / (_h - 750 * _C * _S)**4
+    #         dydS = 20.40816 * _C**2 * _h**2 / (_h - 750 * _C * _S)**3
+    #         dydh = 20.40816 * _C**2 * _S * _h / (_h - 750 * _C * _S)**3
 
     #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
     #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
-    #     dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
     #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
         
     #     return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
+        
+    # kf = ShuffleSplit(
+    #     n_splits=10,
+    #     # n_splits=1,
+    #     train_size=train_size,
+    #     test_size=test_size,
+    #     random_state=0
+    # )
 
-    
-    # This is the most recent version of the pde
+    if yname == 'Er':
+        K1 = 1 / (2 * np.sqrt(24.494))
+        K2 = 0.75
+    if yname == 'sy':
+        K1 = 1 / (3 * 24.404)
+        K2 = 0.75
     def pde(x, y):
         # Convert natural coordinates back to original form
         # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
         # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
-        y1 = y * yr + ya
-        x1_C = x[:, 0] * Cr + Ca
-        x1_S = x[:, 1] * Sr + Sa
-        # x1_W = x[:, 2] * Wr + Wa
-        x1_h = x[:, 3] * hr + ha
+        _C = x[:, 0] * Cr + Ca
+        _S = x[:, 1] * Sr + Sa
+        _h = x[:, 3] * hr + ha
 
         # Partial derivatives in physical coordinate plane
         if yname == 'Er':
-            dydC = 0.23801 * x1_S**2 * x1_h**2 / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
-            dydS = 3.1e-4 * x1_h**2 * (x1_h - 1500 * x1_C * x1_S) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
-            # dydW = tf.zeros_like(x1_W)
-            dydh = 0.00031 * x1_h * (1500 * x1_C * x1_S**2 + x1_S * x1_h) / (x1_S * x1_h - 750 * x1_C * x1_S**2)**2
+            dydC = (1e-6*K1*K2*_h**2)/(-K2*_C*_h**2/_S+1e-3*_h)**2
+            dydS = -(1e-6*K1*K2*_C*_h**2)/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)+K1/(-1e6*K2*_C*_h**2/_S+1e3*_h)
+            dydh = 1e-12*K1*_S*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2
         elif yname == 'sy':
-            dydC = 0.01360 * x1_h**2 * (-562500 * x1_C**2 * x1_S**2 + x1_h**2) / (x1_h - 750 * x1_C * x1_S)**4
-            dydS = 20.40816 * x1_C**2 * x1_h**2 / (x1_h - 750 * x1_C * x1_S)**3
-            # dydW = tf.zeros_like(x1_W)
-            dydh = 20.40816 * x1_C**2 * x1_S * x1_h / (x1_h - 750 * x1_C * x1_S)**3
+            dydC = 1e-6*K1*K2*_C*_h**4/(_S*(-1e-0*K2*_C*_h**2/_S+1e3*_h)**2)-1e6*K1*_h**2/(-1e-6*K2*_C*_h**2/_S+1e3*_h)
+            dydS = -1e-6*K1*K2*_C*_h**4/(_S**2*(-1e-9*K2*_C*_h**2/_S+_h)**2)
+            dydh = K1*_C*_h**2*(2e-6*K2*_C*_h/_S-1e3)/(-1e-9*K2*_C*_h**2/_S+_h)**2+2e6*K1*_C*_h/(-1e06*K2*_C*_h**2/_S+1e3*_h)
 
         dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
         dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
-        # dy_dW = dde.grad.jacobian(y, x, i=0, j=2)*yr/Wr
         dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
         
         return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
         
     kf = ShuffleSplit(
-        n_splits=10,
-        # n_splits=1,
+        # n_splits=10,
+        n_splits=1,
         train_size=train_size,
         test_size=test_size,
         random_state=0

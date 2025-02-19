@@ -23,20 +23,30 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
-        "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
-        "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 5)",
-        "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
+        # "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
+        # "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 5)",
+        # "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
         # "nn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
         # "nn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
-        # "pinn_one('sy', '33TiAlTa', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 0)"
+        # "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 0)",
+        # "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 5)",
+        # "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 20)",
+        # "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 0)",
+        # "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 5)",
+        # "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 20)"
+        "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V'), 0)",
+        "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V'), 5)",
+        "pinn_one('sy', 'Ti-6Al-4V', ('Ti-6Al-4V'), 20)",
+        "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V'), 0)",
+        "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V'), 5)",
+        "pinn_one('Er', 'Ti-6Al-4V', ('Ti-6Al-4V'), 20)"
         ]))
     run_processes(np.array([
-        "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
-        "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 5)",
-        "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
+        # "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
+        # "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 5)",
+        # "pinn_one('sy', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
         # "nn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
-        # "nn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)",
-        # "pinn_one('sy', '33TiAlTa', ('Ti-6Al-4V', 'Al6061', 'Al7075'), 0)"
+        # "nn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 10)"
         ]))
     # run_processes(np.array([
     #     "nn_one('Er', 'FEM_2D', ('FEM_2D'), 0)",
