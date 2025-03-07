@@ -3,10 +3,10 @@ from sympy import pprint
 from sympy import N
 
 # Define variables and equations
-C, h, S, K1, K2 = sym.symbols('C, h, S, K1, K2')
-# C in GPa, h in um, S in N/m
-Er = K1 * S / (h*1e3 - K2 * C * (h*1e3)**2 / S)
-sy = K1 * C * (h*1e3)**2 / ((h*1e3) - K2 * C * (h*1e-3)**2 / S)
+C, h, S, K1, K2, K3 = sym.symbols('C, h, S, K1, K2, K3')
+# C in GPa, h in um, S in N/m. Er and sy in GPa.
+Er = K1 * S / (K2 * h*1e3 - K3 * C * (K2 * h*1e3)**2 / S)
+sy = K1 * C * (K2 * h*1e3)**2 / ((h*1e3) - K3 * C * (K2 * h*1e3)**2 / S)
 
 # Partial derivative of Er
 dEr_C = Er.diff(C)
@@ -31,3 +31,13 @@ print('Partial derivatives of sy with respect to S:')
 pprint(N(dsy_S, 10))
 print('Partial derivatives of sy with respect to h:')
 pprint(N(dsy_h, 10))
+
+import numpy as sp
+mu16, theta, kappa, KI, KII, sqrtpi = sym.symbols('mu16, theta, kappa, KI, KII, sqrtpi')
+S = (1/(mu16))*((1+sym.cos(theta))*(kappa-sym.cos(theta))*(KI/sqrtpi)**2+2*sym.sin(theta)*(2*sym.cos(theta)-(kappa-1))*(KI/sqrtpi)*(KII/sqrtpi)+((kappa+1)*(1-sym.cos(theta))+(1+sym.cos(theta))*(3*sym.cos(theta)-1))*(KII/sqrtpi)**2)
+dS = S.diff(theta)
+ddS = dS.diff(theta)
+print('dS:')
+pprint(N(dS, 10))
+print('ddS:')
+pprint(N(ddS, 10))

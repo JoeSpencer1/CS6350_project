@@ -33,7 +33,6 @@ def Pi5(hrhm):
         1.13111 - 1.74756 ** (-1.49291 * hrhm ** 2.535334) - 0.075187 * hrhm ** 1.135826
     )
 
-
 def Pitheta(theta, Er_sigma):
     Ersig = np.log(Er_sigma)
     t1 = (-2.3985e-5 * theta ** 3 + 6.0446e-4 * theta ** 2 +0.13243 * theta - 5.0950)
@@ -166,8 +165,8 @@ def model_inverse(C, dPdh, nu, Er, hm, hr, theta=70.296, nu_i=0.0691, E_i=1143, 
     return E/1e9, Er/1e9, sy/1e9, n
 
 def main():
-    # test_inverse()
-    gen_forward()
+    test_inverse('Al7075')
+    # gen_forward()
 
 if __name__ == '__main__':
     main()

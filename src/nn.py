@@ -90,22 +90,21 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     geom = dde.geometry.Hypercube([-1, -1, -1, -1], [1, 1, 1, 1])
     # geom = dde.geometry.Hypercube([Cm, Sm, Wm, hm], [Cp, Sp, Wp, hp])
     # geom = dde.geometry.Hypercube([0, 0, 0, 0], [1, 1, 1, 1])
-    Cp, Cm = max(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0]))), min(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0])))
-    Sp, Sm = max(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1]))), min(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1])))
-    Wp, Wm = max(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2]))), min(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2])))
-    hp, hm = max(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3]))), min(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3])))
-    yp, ym = max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))
+    # Cp, Cm = max(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0]))), min(np.concatenate((model_data.X[:, 0], datatrain.X[:, 0], datatest.X[:, 0])))
+    # Sp, Sm = max(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1]))), min(np.concatenate((model_data.X[:, 1], datatrain.X[:, 1], datatest.X[:, 1])))
+    # Wp, Wm = max(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2]))), min(np.concatenate((model_data.X[:, 2], datatrain.X[:, 2], datatest.X[:, 2])))
+    # hp, hm = max(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3]))), min(np.concatenate((model_data.X[:, 3], datatrain.X[:, 3], datatest.X[:, 3])))
+    # yp, ym = max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))
+    Cp, Cm = max(np.concatenate((datatrain.X[:, 0], datatest.X[:, 0]))), min(np.concatenate((datatrain.X[:, 0], datatest.X[:, 0])))
+    Sp, Sm = max(np.concatenate((datatrain.X[:, 1], datatest.X[:, 1]))), min(np.concatenate((datatrain.X[:, 1], datatest.X[:, 1])))
+    Wp, Wm = max(np.concatenate((datatrain.X[:, 2], datatest.X[:, 2]))), min(np.concatenate((datatrain.X[:, 2], datatest.X[:, 2])))
+    hp, hm = max(np.concatenate((datatrain.X[:, 3], datatest.X[:, 3]))), min(np.concatenate((datatrain.X[:, 3], datatest.X[:, 3])))
+    yp, ym = max(np.concatenate((datatrain.y, datatest.y))), min(np.concatenate((datatrain.y, datatest.y)))
     Cr, Ca = (Cp-Cm)/2, (Cp+Cm)/2
     Sr, Sa = (Sp-Sm)/2, (Sp+Sm)/2
     Wr, Wa = (Wp-Wm)/2, (Wp+Wm)/2
     hr, ha = (hp-hm)/2, (hp+hm)/2
     yr, ya = (yp-ym)/2, (yp+ym)/2
-    # Ca, Sa, Wa, ha, ya = (Cp + Cm)/2, (Sp + Sm)/2, (Wp + Wm)/2, (hp + hm)/2, (yp + ym)/2
-    model_data.X[:, 0] = (model_data.X[:, 0]-Ca)/Cr
-    model_data.X[:, 1] = (model_data.X[:, 1]-Sa)/Sr
-    model_data.X[:, 2] = (model_data.X[:, 2]-Wa)/Wr
-    model_data.X[:, 3] = (model_data.X[:, 3]-ha)/hr
-    model_data.y = (model_data.y-ya)/yr
     # Get experimental training and test data
     datatrain.X[:, 0] = (datatrain.X[:, 0]-Ca)/Cr
     datatrain.X[:, 1] = (datatrain.X[:, 1]-Sa)/Sr
@@ -118,6 +117,15 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     datatest.X[:, 3] = (datatest.X[:, 3]-ha)/hr
     datatest.y = (datatest.y-ya)/yr
     longest = max([datatrain.y, datatest.y], key=len)
+    # Ca, Sa, Wa, ha, ya = (Cp + Cm)/2, (Sp + Sm)/2, (Wp + Wm)/2, (hp + hm)/2, (yp + ym)/2
+    model_data.X[:, 0] = (model_data.X[:, 0]-Ca)/Cr
+    model_data.X[:, 1] = (model_data.X[:, 1]-Sa)/Sr
+    model_data.X[:, 2] = (model_data.X[:, 2]-Wa)/Wr
+    model_data.X[:, 3] = (model_data.X[:, 3]-ha)/hr
+    model_data.y = (model_data.y-ya)/yr
+    abs_mask = np.all(np.abs(model_data.X) < 1, axis=1) & np.all(np.abs(model_data.y) < 1, axis=1)
+    model_data.X = model_data.X[abs_mask]
+    model_data.y = model_data.y[abs_mask]
     print('Cp = {}, Sp = {}, Wp = {}, hp = {}, yp = {}'.format(Cp, Sp, Wp, hp, yp))
     print('Cm = {}, Sm = {}, Wm = {}, hm = {}, ym = {}'.format(Cm, Sm, Wm, hm, ym))
     print('{}, {}'.format(max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))))
@@ -130,8 +138,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
-    
-    # # This is the most recent version of the pde
+    # This is the most recent version of the pde
     # def pde(x, y):
     #     # Convert natural coordinates back to original form
     #     # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
@@ -156,21 +163,12 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
         
     #     return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
-        
-    # kf = ShuffleSplit(
-    #     n_splits=10,
-    #     # n_splits=1,
-    #     train_size=train_size,
-    #     test_size=test_size,
-    #     random_state=0
-    # )
 
-    if yname == 'Er':
-        K1 = 1 / (2 * np.sqrt(24.494))
-        K2 = 0.75
-    if yname == 'sy':
-        K1 = 1 / (3 * 24.404)
-        K2 = 0.75
+
+    K1 = dde.Variable(1e-5)
+    K2 = dde.Variable(0.75)
+    K3 = dde.Variable(0.75)
+
     def pde(x, y):
         # Convert natural coordinates back to original form
         # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
@@ -178,6 +176,12 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         _C = x[:, 0] * Cr + Ca
         _S = x[:, 1] * Sr + Sa
         _h = x[:, 3] * hr + ha
+        # if yname == 'Er':
+        #     K1 = np.pi / (2 * np.sqrt(24.494))
+        #     K2 = 0.75
+        # if yname == 'sy':
+        #     K1 = 1 / (3 * 24.494)
+        #     K2 = 0.75
 
         # Partial derivatives in physical coordinate plane
         if yname == 'Er':
@@ -185,13 +189,25 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
             dydS = -(1e-6*K1*K2*_C*_h**2)/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)+K1/(-1e6*K2*_C*_h**2/_S+1e3*_h)
             dydh = 1e-12*K1*_S*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2
         elif yname == 'sy':
-            dydC = 1e-6*K1*K2*_C*_h**4/(_S*(-1e-0*K2*_C*_h**2/_S+1e3*_h)**2)-1e6*K1*_h**2/(-1e-6*K2*_C*_h**2/_S+1e3*_h)
-            dydS = -1e-6*K1*K2*_C*_h**4/(_S**2*(-1e-9*K2*_C*_h**2/_S+_h)**2)
-            dydh = K1*_C*_h**2*(2e-6*K2*_C*_h/_S-1e3)/(-1e-9*K2*_C*_h**2/_S+_h)**2+2e6*K1*_C*_h/(-1e06*K2*_C*_h**2/_S+1e3*_h)
+            dydC = K1*K2*_C*_h**4/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)-1e6*K1*_h**2/(-1e6*K2*_C*_h**2/_S+1e3*_h)
+            dydS = -K1*K2*_C*_h**4/(_S**2*(-K2*_C*_h**2/_S+1e-3*_h)**2)
+            dydh = 1e-6*K1*_C*_h**2*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2+2e6*K1*_C*_h/(-1e06*K2*_C*_h**2/_S+1e3*_h)
+        # if yname == 'Er':
+        #     dydC = (1e-6*K1*K2*K3*_h**2)/(-K2*K3*_C*_h**2/_S+1e-3*K2*_h)**2
+        #     dydS = -(1e-6*K1*K2*K3*_C*_h**2)/(_S*(-K2**K3*_C*_h**2/_S+1e-3*K2*_h)**2)+K1/(-1e6*K2*K3*_C*_h**2/_S+1e3*K2*_h)
+        #     dydh = 1e-12*K1*_S*(2e6*K2*K3*_C*_h/_S-1e3*K2)/(-K2**2*K3*_C*_h**2/_S+1e-3*K2*_h)**2
+        # elif yname == 'sy':
+        #     dydC = K1*K2*K3*_C*_h**4/(_S*(-K2**2*K3*_C*_h**2/_S+1e-3*_h)**2)-1e6*K1*K2**2*_h**2/(-1e6*K1*K2**2*_C*_h**2/_S+1e3*_h)
+        #     dydS = -K1*K2**4*K3*_C**2*_h**4/(_S**2*(-K2**2*K3*_C*_h**2/_S+1e-3*_h)**2)
+        #     dydh = 1e-6*K1*K2**2*_C*_h**2*(2e6*K2**2*K3*_C*_h/_S-1e3)/(-K2**2*K3*_C*_h**2/_S+1e-3*_h)**2+2e6*K1*K2**2*_C*_h/(-1e06*K2**2*K3*_C*_h**2/_S+1e3*_h)
+        # Convert back to natural coordinates
+        dydC *= Cr/yr
+        dydS *= Sr/yr
+        dydh *= hr/yr
 
-        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
-        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
-        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
+        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
+        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
+        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
         
         return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
         
@@ -215,7 +231,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
         datatrain.X, datatest.X = datatrain_og.X[train_index*len(datatrain.X)//len(longest)], datatest_og.X[test_index*len(datatest.X)//len(longest)]
         datatrain.y, datatest.y = datatrain_og.y[train_index*len(datatrain.y)//len(longest)], datatest_og.y[test_index*len(datatest.y)//len(longest)]
-        model_indices = np.random.choice(model_data_og.X.shape[0], size=20, replace=False)
+        model_indices = np.random.choice(model_data_og.X.shape[0], size=40, replace=False)
         model_data.X, model_data.y = model_data_og.X[model_indices], model_data_og.y[model_indices]
 
         # Define boundary condition using model data
@@ -235,12 +251,17 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
             
         # Define neural network
         layer_size = [data.train_x.shape[1]] + [wid] * lay + [1]
-        activation = 'selu'#'tanh'
+        activation = 'tanh'#'selu'
         initializer = 'Glorot uniform'
         net = dde.maps.FNN(layer_size, activation, initializer)
         model = dde.Model(data, net)
-        model.compile("adam", lr=0.001)
-        _, _ = model.train(epochs=30000)
+
+        variable = dde.callbacks.VariableValue([K1, K2])
+        # model.compile('adam', lr=0.001)
+        model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2, K3])
+        # _, _ = model.train(epochs=30000)
+        _, _ = model.train(epochs=30000, callbacks=[variable], disregard_previous_best=True)
+        # _, _ = model.train(epochs=30000, disregard_previous_best=True)
 
         # Calculate final mean percent error
         y_pred = model.predict(datatest.X)
