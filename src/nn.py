@@ -18,7 +18,6 @@ import torch
 import torch.nn as tnn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-import sympy as sp
 
 global apeG, yG
 
@@ -130,6 +129,7 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     print('Cm = {}, Sm = {}, Wm = {}, hm = {}, ym = {}'.format(Cm, Sm, Wm, hm, ym))
     print('{}, {}'.format(max(np.concatenate((model_data.y, datatrain.y, datatest.y))), min(np.concatenate((model_data.y, datatrain.y, datatest.y)))))
     # model_data = dde.icbc.PointSetBC(model_data.X, model_data.y, component=0)
+    res = []
 
     if n_hi == 0: 
         train_size = 10
@@ -138,36 +138,20 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         train_size = n_hi
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
-    # This is the most recent version of the pde
-    # def pde(x, y):
-    #     # Convert natural coordinates back to original form
-    #     # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
-    #     # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
-    #     y1 = y * yr + ya
-    #     _C = x[:, 0] * Cr + Ca
-    #     _S = x[:, 1] * Sr + Sa
-    #     _h = x[:, 3] * hr + ha
-
-    #     # Partial derivatives in physical coordinate plane
-    #     if yname == 'Er':
-    #         dydC = 0.23801 * _S**2 * _h**2 / (_S * _h - 750 * _C * _S**2)**2
-    #         dydS = 3.1e-4 * _h**2 * (_h - 1500 * _C * _S) / (_S * _h - 750 * _C * _S**2)**2
-    #         dydh = 0.00031 * _h * (1500 * _C * _S**2 + _S * _h) / (_S * _h - 750 * _C * _S**2)**2
-    #     elif yname == 'sy':
-    #         dydC = 0.01360 * _h**2 * (-562500 * _C**2 * _S**2 + _h**2) / (_h - 750 * _C * _S)**4
-    #         dydS = 20.40816 * _C**2 * _h**2 / (_h - 750 * _C * _S)**3
-    #         dydh = 20.40816 * _C**2 * _S * _h / (_h - 750 * _C * _S)**3
-
-    #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)*yr/Cr
-    #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)*yr/Sr
-    #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)*yr/hr
-        
-    #     return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
-
-
     K1 = dde.Variable(1e-5)
     K2 = dde.Variable(0.75)
-    K3 = dde.Variable(0.75)
+    # K3 = dde.Variable(0.75)
+    # K1a = dde.Variable(1e-5)
+    # K1b = dde.Variable(1e-5)
+    # K1c = dde.Variable(1e-5)
+    # K1d = dde.Variable(1e-5)
+    # K2a = dde.Variable(0.75)
+    # K2b = dde.Variable(0.75)
+    # K2c = dde.Variable(0.75)
+    # K2d = dde.Variable(0.75)
+    # K2e = dde.Variable(0.75)
+    # K2f = dde.Variable(0.75)
+    # K2g = dde.Variable(0.75)
 
     def pde(x, y):
         # Convert natural coordinates back to original form
@@ -183,7 +167,17 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         #     K1 = 1 / (3 * 24.494)
         #     K2 = 0.75
 
+
         # Partial derivatives in physical coordinate plane
+        # if yname == 'Er':
+        #     dydC = (1e-6*K1*K2*_h**2)/(-K2a*_C*_h**2/_S+1e-3*_h)**2
+        #     dydS = -(1e-6*K1a*K2b*_C*_h**2)/(_S*(-K2c*_C*_h**2/_S+1e-3*_h)**2)+K1b/(-1e6*K2d*_C*_h**2/_S+1e3*_h)
+        #     dydh = 1e-12*K1c*_S*(2e6*K2e*_C*_h/_S-1e3)/(-K2f*_C*_h**2/_S+1e-3*_h)**2
+        # elif yname == 'sy':
+        #     dydC = K1*K2*_C*_h**4/(_S*(-K2a*_C*_h**2/_S+1e-3*_h)**2)-1e6*K1a*_h**2/(-1e6*K2b*_C*_h**2/_S+1e3*_h)
+        #     dydS = -K1b*K2c*_C*_h**4/(_S**2*(-K2d*_C*_h**2/_S+1e-3*_h)**2)
+        #     dydh = 1e-6*K1c*_C*_h**2*(2e6*K2e*_C*_h/_S-1e3)/(-K2f*_C*_h**2/_S+1e-3*_h)**2+2e6*K1d*_C*_h/(-1e06*K2g*_C*_h**2/_S+1e3*_h)
+        # This model assumes the same K terms everywhere.
         if yname == 'Er':
             dydC = (1e-6*K1*K2*_h**2)/(-K2*_C*_h**2/_S+1e-3*_h)**2
             dydS = -(1e-6*K1*K2*_C*_h**2)/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)+K1/(-1e6*K2*_C*_h**2/_S+1e3*_h)
@@ -258,13 +252,15 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
 
         variable = dde.callbacks.VariableValue([K1, K2])
         # model.compile('adam', lr=0.001)
-        model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2, K3])
+        model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2])
+        # model.compile('adam', lr=0.001, external_trainable_variables=[K1, K1a, K1b, K1c, K1d, K2, K2a, K2b, K2c, K2d, K2e, K2f, K2g])
         # _, _ = model.train(epochs=30000)
         _, _ = model.train(epochs=30000, callbacks=[variable], disregard_previous_best=True)
         # _, _ = model.train(epochs=30000, disregard_previous_best=True)
 
         # Calculate final mean percent error
         y_pred = model.predict(datatest.X)
+        res.append(y_pred)
         mape.append(np.mean(np.abs((datatest.y - y_pred) / datatest.y)) * 100)
 
     print('pinn_one ' + yname + ' ' + str(np.mean(mape)) + ' ' + str(np.std(mape)) + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
@@ -402,6 +398,7 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         random_state=0
     )
 
+    res = []
     mape = []
     iter = 0
     for train_index, test_index in kf.split(longest):
@@ -419,7 +416,7 @@ def nn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
     print(mape)
     print(yname, n_hi, np.mean(mape), np.std(mape))
     with open('output.txt', 'a') as f:
-        f.write('nn_one ' + yname + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
+        f.write('nn_one ' + yname + ' ' + f'{np.mean(res):.2f}' + ' ' + f'{np.std(res):.2f}' + ' ' + f'{np.mean(mape):.2f}' + ' ' + f'{np.std(mape):.2f}' + ' ' + t2s(testname) + ' ' + t2s(trainname) + ' ' + str(n_hi) + ' ' + str(n_vd) + ' ' + str(lay) + ' ' + str(wid) + '\n')
     
     return
 
