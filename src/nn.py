@@ -141,81 +141,86 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         test_size = max(5,min(len(datatrain.X) - n_hi, len(datatrain.X) - train_size - 1))
 
     K1 = dde.Variable(1e-5)
-    K2 = dde.Variable(0.75)
-    K3 = dde.Variable(0.75)
-    # K1a = dde.Variable(1e-5)
-    # K1b = dde.Variable(1e-5)
-    # K1c = dde.Variable(1e-5)
-    # K1d = dde.Variable(1e-5)
-    # K2a = dde.Variable(0.75)
-    # K2b = dde.Variable(0.75)
-    # K2c = dde.Variable(0.75)
-    # K2d = dde.Variable(0.75)
-    # K2e = dde.Variable(0.75)
-    # K2f = dde.Variable(0.75)
-    # K2g = dde.Variable(0.75)
+    K2 = dde.Variable(1)
+    K3 = dde.Variable(1)
+    K4 = dde.Variable(1)
+    K5 = dde.Variable(1)
+    K6 = dde.Variable(1)
+    K7 = dde.Variable(1)
+    K8 = dde.Variable(1)
 
-    def pde(x, y):
-        # Convert natural coordinates back to original form
-        _C = x[:, 0] * Cr + Ca
-        _S = x[:, 1] * Sr + Sa
-        _W = x[:, 2] * Wr + Wa
-        _h = x[:, 3] * hr + ha
-
-        # Using the equaions from Venkatesh2000
-        # Am = _h**2 * np.exp(1.218*_W+2.193)
-
-        # # This model assumes the same K terms everywhere.
-        if yname == 'Er':
-            dydC = 1e-6*K1*K2**2*K3*_W**2*_h**2/(-_C*K2*K3*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
-            dydS = 1e-6*K1*K2**2*K3*_C*_W**2*_h**2/(_S*(-K2**2*K3*_C*_W**2*_h**2/_S)**2+1e-3*K2*_W*_h)\
-            +K1/(-1e6*K2**2*K3*_C*_W**2*_h**2/_S+1e3*K2*_W*_h)
-            dydW = 1e-12*K1*_S*(2e6*K2**2*K3*_C*_W*_h**2/_S-1e3*K2*_h)/(-K2*K3*_C*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
-            dydh = 1e-12*K1*_S*(2e6*K2**2*K3*_C*_W**2*_h/_S-1e3*K2*_W)/(-K2**2*K3*_C*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
-        elif yname == 'sy':
-            dydC = 6.12e+7*K1*K2*_W-6.77e-7*(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S))*(1.48e+12*K2**2*K3**2*_C*_W**3*_h**2/(_S**2*(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S))**2)+1.48e+6*K1*K3*_W/(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S)))/(K1*K3*_C*_W)
-            dydS = -1.0*(-1.0e+6*_C*K2**2*K3*_W**2*_h**2/(K1*_S**3) + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S**2))/(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))
-            dydW = 6.12e+7*_C*K1*K2-6.77e-7*(-0.000871+(-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))*(1.48e+6*_C*K1*K3/(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S)) - 1.48e+6*_C*K3*_W*(-2.0e+6*_C*K2**2*K3*_W*_h**2/_S + 1.0e+3*K2*_h)/(_S*(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))**2))/(_C*K1*K3*_W)
-            dydh = 1.0*(-2.0e+6*_C*K2**2*K3*_W**2*_h/_S + 1.0e+3*K2*_W)/(K1*_S*(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S)))
-        # Convert back to natural coordinates
-        dydC *= Cr/yr
-        dydS *= Sr/yr
-        dydW *= Wr/yr
-        dydh *= hr/yr
-
-        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
-        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
-        dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
-        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
-        
-        return dy_dC - dydC + dy_dS - dydS + dy_dW - dydW + dy_dh - dydh
     # def pde(x, y):
     #     # Convert natural coordinates back to original form
-    #     # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
-    #     # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
     #     _C = x[:, 0] * Cr + Ca
     #     _S = x[:, 1] * Sr + Sa
+    #     _W = x[:, 2] * Wr + Wa
     #     _h = x[:, 3] * hr + ha
 
-    #     # This model assumes the same K terms everywhere.
+    #     # Using the equaions from Venkatesh2000
+    #     # Am = _h**2 * np.exp(1.218*_W+2.193)
+
+    #     # # # This model assumes the same K terms everywhere.
     #     if yname == 'Er':
-    #         dydC = (1e-6*K1*K2*_h**2)/(-K2*_C*_h**2/_S+1e-3*_h)**2
-    #         dydS = -(1e-6*K1*K2*_C*_h**2)/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)+K1/(-1e6*K2*_C*_h**2/_S+1e3*_h)
-    #         dydh = 1e-12*K1*_S*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2
+    #         dydC = 1e-6*K1*K2**2*K3*_W**2*_h**2/(-_C*K2*K3*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
+    #         dydS = 1e-6*K1*K2**2*K3*_C*_W**2*_h**2/(_S*(-K2**2*K3*_C*_W**2*_h**2/_S)**2+1e-3*K2*_W*_h)\
+    #         +K1/(-1e6*K2**2*K3*_C*_W**2*_h**2/_S+1e3*K2*_W*_h)
+    #         dydW = 1e-12*K1*_S*(2e6*K2**2*K3*_C*_W*_h**2/_S-1e3*K2*_h)/(-K2*K3*_C*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
+    #         dydh = 1e-12*K1*_S*(2e6*K2**2*K3*_C*_W**2*_h/_S-1e3*K2*_W)/(-K2**2*K3*_C*_W**2*_h**2/_S+1e-3*K2*_W*_h)**2
     #     elif yname == 'sy':
-    #         dydC = K1*K2*_C*_h**4/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)-1e6*K1*_h**2/(-1e6*K2*_C*_h**2/_S+1e3*_h)
-    #         dydS = -K1*K2*_C*_h**4/(_S**2*(-K2*_C*_h**2/_S+1e-3*_h)**2)
-    #         dydh = 1e-6*K1*_C*_h**2*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2+2e6*K1*_C*_h/(-1e06*K2*_C*_h**2/_S+1e3*_h)
+    #         dydC = 6.12e+7*K1*K2*_W-6.77e-7*(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S))*(1.48e+12*K2**2*K3**2*_C*_W**3*_h**2/(_S**2*(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S))**2)+1.48e+6*K1*K3*_W/(-0.000871+(-1.0e+6*K2**2*K3*_C*_W**2*_h**2/_S+1.0e+3*K2*_W*_h)/(K1*_S)))/(K1*K3*_C*_W)
+    #         dydS = -1.0*(-1.0e+6*_C*K2**2*K3*_W**2*_h**2/(K1*_S**3) + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S**2))/(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))
+    #         dydW = 6.12e+7*_C*K1*K2-6.77e-7*(-0.000871+(-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))*(1.48e+6*_C*K1*K3/(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S)) - 1.48e+6*_C*K3*_W*(-2.0e+6*_C*K2**2*K3*_W*_h**2/_S + 1.0e+3*K2*_h)/(_S*(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S))**2))/(_C*K1*K3*_W)
+    #         dydh = 1.0*(-2.0e+6*_C*K2**2*K3*_W**2*_h/_S + 1.0e+3*K2*_W)/(K1*_S*(-0.000871 + (-1.0e+6*_C*K2**2*K3*_W**2*_h**2/_S + 1.0e+3*K2*_W*_h)/(K1*_S)))
+    #     # # Here is a model with updated variables.
+    #     # if yname == 'Er':
+    #     #     dydC = 1.0e-6*K1*K2**2*K4*_W**(2.0*K3)*_h**2/(-_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 0.001*K2*_W**K3*_h)**2
+    #     #     dydS = -1.0e-6*_C*K1*K2**2*K4*_W**(2.0*K3)*_h**2/(_S*(-_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 0.001*K2*_W**K3*_h)**2) + K1/(-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)
+    #     #     dydW = 1.0e-12*K1*_S*(2.0e+6*_C*K2**2*K3*K4*_W**(2.0*K3)*_h**2/(_S*_W) - 1.0e+3*K2*K3*_W**K3*_h/_W)/(-_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 0.001*K2*_W**K3*_h)**2
+    #     #     dydh = 1.0e-12*K1*_S*(2.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h/_S - 1.0e+3*K2*_W**K3)/(-_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 0.001*K2*_W**K3*_h)**2
+    #     # elif yname == '_Sy':
+    #     #     dydC = 6.12e+7*K5*K7*_W**K6 - 6.77e-7*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S))*(1.48e+12*_C*K2**2*K4*K5*K8*_W**(2.0*K3)*_W**K6*_h**2/(K1*_S**2*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e3*K2*_W**K3*_h)/(K1*_S))**2) + 1.48e+6*K5*K8*_W**K6/(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e3*K2*_W**K3*_h)/(K1*_S)))/(_C*K5*K8*_W**K6)
+    #     #     dydS = -1.0*(-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/(K1*_S**3) + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S**2))/(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S))
+    #     #     dydW = 6.12e+7*_C*K5*K6*K7*_W**K6/_W - 6.77e-7*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S))*(1.48e6*_C*K5*K6*K8*_W**K6/(_W*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S))) - 1.48e+6*_C*K5*K8*_W**K6*(-2.0e+6*_C*K2**2*K3*K4*_W**(2.0*K3)*_h**2/(_S*_W) + 1.0e+3*K2*K3*_W**K3*_h/_W)/(K1*_S*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S))**2))/(_C*K5*K8*_W**K6)
+    #     #     dydh = 1.0*(-2.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h/_S + 1.0e+3*K2*_W**K3)/(K1*_S*(-0.000871 + (-1.0e+6*_C*K2**2*K4*_W**(2.0*K3)*_h**2/_S + 1.0e+3*K2*_W**K3*_h)/(K1*_S)))
     #     # Convert back to natural coordinates
     #     dydC *= Cr/yr
     #     dydS *= Sr/yr
+    #     dydW *= Wr/yr
     #     dydh *= hr/yr
 
     #     dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
     #     dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
+    #     dy_dW = dde.grad.jacobian(y, x, i=0, j=2)
     #     dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
         
-    #     return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
+    #     return dy_dC - dydC + dy_dS - dydS + dy_dW - dydW + dy_dh - dydh
+    def pde(x, y):
+        # Convert natural coordinates back to original form
+        # sy = Ch^2/(3*24.5*(h-0.75Ch^2/S)^2)
+        # Er = piS/2\sqrt(24.5)(h-0.75Ch^2/S)
+        _C = x[:, 0] * Cr + Ca
+        _S = x[:, 1] * Sr + Sa
+        _h = x[:, 3] * hr + ha
+
+        # This model assumes the same K terms everywhere.
+        if yname == 'Er':
+            dydC = (1e-6*K1*K2*_h**2)/(-K2*_C*_h**2/_S+1e-3*_h)**2
+            dydS = -(1e-6*K1*K2*_C*_h**2)/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)+K1/(-1e6*K2*_C*_h**2/_S+1e3*_h)
+            dydh = 1e-12*K1*_S*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2
+        elif yname == 'sy':
+            dydC = K1*K2*_C*_h**4/(_S*(-K2*_C*_h**2/_S+1e-3*_h)**2)-1e6*K1*_h**2/(-1e6*K2*_C*_h**2/_S+1e3*_h)
+            dydS = -K1*K2*_C*_h**4/(_S**2*(-K2*_C*_h**2/_S+1e-3*_h)**2)
+            dydh = 1e-6*K1*_C*_h**2*(2e6*K2*_C*_h/_S-1e3)/(-K2*_C*_h**2/_S+1e-3*_h)**2+2e6*K1*_C*_h/(-1e06*K2*_C*_h**2/_S+1e3*_h)
+        # Convert back to natural coordinates
+        dydC *= Cr/yr
+        dydS *= Sr/yr
+        dydh *= hr/yr
+
+        dy_dC = dde.grad.jacobian(y, x, i=0, j=0)
+        dy_dS = dde.grad.jacobian(y, x, i=0, j=1)
+        dy_dh = dde.grad.jacobian(y, x, i=0, j=3)
+        
+        return dy_dC - dydC + dy_dS - dydS + dy_dh - dydh
         
     kf = ShuffleSplit(
         n_splits=10,
@@ -262,13 +267,14 @@ def pinn_one(yname, testname, trainname, n_hi, n_vd=0.2, lay=2, wid=32):
         net = dde.maps.FNN(layer_size, activation, initializer)
         model = dde.Model(data, net)
 
-        variable = dde.callbacks.VariableValue([K1, K2, K3])
+        # variable = dde.callbacks.VariableValue([K1, K2, K3], period=250)
         # model.compile('adam', lr=0.001)
         # model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2])
         model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2, K3])
+        # model.compile('adam', lr=0.001, external_trainable_variables=[K1, K2, K3, K4, K5, K6, K7, K8])
         # _, _ = model.train(epochs=30000)
-        _, _ = model.train(epochs=30000, callbacks=[variable], disregard_previous_best=True)
-        # _, _ = model.train(epochs=30000, disregard_previous_best=True)
+        # _, _ = model.train(epochs=30000, callbacks=[variable], disregard_previous_best=True)
+        _, _ = model.train(epochs=30000, disregard_previous_best=True)
 
         # Calculate final mean percent error
         y_pred = model.predict(datatest.X)

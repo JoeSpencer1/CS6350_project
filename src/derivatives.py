@@ -79,13 +79,14 @@ from sympy import N
 
 
 # # First set of equations with different scaling factor for Er
-C, h, W, S, HC, K1, K2, K3 = sym.symbols('C, h, W, S, HC, K1, K2, K3')
+C, h, W, S, HC, K1, K2, K3, K4, K5, K6, K7, K8 = sym.symbols('C, h, W, S, HC, K1, K2, K3, K4, K5, K6, K7, K8')
 # C in GPa, h in um, S in N/m. Er and sy in GPa.
-Er = K1 * S / (K2 * W * h*1e3 - K3 * C * (K2 * W *h*1e3)**2 / S)
+# Er = K1 * S / (K2 * W * h*1e3 - K3 * C * (K2 * W *h*1e3)**2 / S)
+Er = K1 * S / (K2 * W**K3 * h*1e3 - K4 * C * (K2*W**K3 * h*1e3)**2 / S)
 E = (1-0.3**2) / (1 / Er - (1-0.0691**2) / 1143)
-H = K1 * W * C*1e9 / 24.5
+H = K5 * W**K6 * C*1e9 / 24.5
 alpha = 70.296 * sym.pi / 180
-sy = 1.5 * K2*H - sym.ln(sym.cot(alpha)*K3*E*H/9)
+sy = 1.5 * K7*H - sym.ln(sym.cot(alpha)*K8*E*H/9)
 
 # Partial derivative of Er
 dEr_C = Er.diff(C)
