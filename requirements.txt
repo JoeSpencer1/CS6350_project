@@ -1,3 +1,4 @@
+python==3.11
 deepxde==1.11.1
 keras==2.15.0
 tensorflow==2.15.0 tensorflow-probability==0.23.0
@@ -10,4 +11,5 @@ matplotlib
 numpy
 pandas
 scipy
-sklearn
+scikit-learn
+pysr

@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 import pandas as pd
+import os
 
 class FileData(object):
     def __init__(self, filename, yname, new=False):
@@ -84,6 +85,20 @@ class FileData(object):
                 self.y = df['s0.033 (GPa)'].values[:, None]
             else:
                 self.y = np.vstack((self.y, df['s0.033 (GPa)'].values[:, None]))
+
+    def addprop(self, column_name, values):
+        if type(self.filename) is tuple:
+            count = 0
+            for i in range(len(self.filename)):
+                df = pd.read_csv('../data/' + self.filename[i] + '.csv')
+                len = df.shape[0]
+                df[column_name] = values[count:len]
+                count += len
+                df.to_csv('../data/' + self.filename + '.csv', index=False)
+        else:
+            df = pd.read_csv('../data/' + self.filename + '.csv')
+            df[column_name] = values
+            df.to_csv('../data/' + self.filename + '.csv', index=False)
 
     def pop(self, index):
         self.X = np.delete(self.X, index, axis=0)

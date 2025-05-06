@@ -1,136 +1,94 @@
-import sympy as sym
-from sympy import pprint
-from sympy import N
+from data import FileData
+import numpy as np
+from sklearn.neighbors import NearestNeighbors
+import numpy as np
 
-# # Define variables and equations
-# C, h, S, K1, K2, K3 = sym.symbols('C, h, S, K1, K2, K3')
-# # C in GPa, h in um, S in N/m. Er and sy in GPa.
-# Er = K1 * S / (K2 * h*1e3 - K3 * C * (K2 * h*1e3)**2 / S)
-# sy = K1 * C * (K2 * h*1e3)**2 / ((h*1e3) - K3 * C * (K2 * h*1e3)**2 / S)
+def derivatives(prop):
+    X = f'data_{prop}'.X
+    y = f'data_{prop}'.y
 
-# # Partial derivative of Er
-# dEr_C = Er.diff(C)
-# dEr_S = Er.diff(S)
-# dEr_h = Er.diff(h)
+    result = estimate_jacobian(X, y)
+    for row in result:
+        print(row)
+    result = estimate_hessian(X, y)
+    for row in result:
+        print(row)
 
-# # Partial derivative of sy
-# dsy_C = sy.diff(C)
-# dsy_S = sy.diff(S)
-# dsy_h = sy.diff(h)
+def estimate_jacobian(X, y, k=10):
+    n_samples, n_features = X.shape
+    gradients = np.zeros((n_samples, n_features))
 
-# # Print results in a more readable format
-# print('Partial derivatives of Er with respect to C:')
-# pprint(N(dEr_C, 10))
-# print('Partial derivatives of Er with respect to S:')
-# pprint(N(dEr_S, 10))
-# print('Partial derivatives of Er with respect to h:')
-# pprint(N(dEr_h, 10))
-# print('Partial derivatives of sy with respect to C:')
-# pprint(N(dsy_C, 10))
-# print('Partial derivatives of sy with respect to S:')
-# pprint(N(dsy_S, 10))
-# print('Partial derivatives of sy with respect to h:')
-# pprint(N(dsy_h, 10))
+    nbrs = NearestNeighbors(n_neighbors=k+1, algorithm='auto').fit(X)
+    distances, indices = nbrs.kneighbors(X)
 
-# mu16, theta, kappa, KI, KII, sqrtpi = sym.symbols('mu16, theta, kappa, KI, KII, sqrtpi')
-# S = (1/(mu16))*((1+sym.cos(theta))*(kappa-sym.cos(theta))*(KI/sqrtpi)**2+2*sym.sin(theta)*(2*sym.cos(theta)-(kappa-1))*(KI/sqrtpi)*(KII/sqrtpi)+((kappa+1)*(1-sym.cos(theta))+(1+sym.cos(theta))*(3*sym.cos(theta)-1))*(KII/sqrtpi)**2)
-# dS = S.diff(theta)
-# ddS = dS.diff(theta)
-# print('dS:')
-# pprint(N(dS, 10))
-# print('ddS:')
-# pprint(N(ddS, 10))
+    for i in range(n_samples):
+        neigh_idx = indices[i][1:]  # exclude self
+        X_neigh = X[neigh_idx] - X[i]
+        y_neigh = y[neigh_idx] - y[i]
 
+        # Solve least squares: X_neigh @ grad ≈ y_neigh
+        grad_i, _, _, _ = np.linalg.lstsq(X_neigh, y_neigh, rcond=None)
+        gradients[i] = grad_i.flatten()
 
+    return gradients
 
+def estimate_hessian(X, y, k=20):
+    n_samples, n_features = X.shape
+    hessians = np.zeros((n_samples, n_features, n_features))
 
-# # This is the second set of equations.
-# C, S, W, h = sym.symbols('C, S, W, h')
+    # Prepare nearest neighbors
+    nbrs = NearestNeighbors(n_neighbors=k+1, algorithm='auto').fit(X)
+    _, indices = nbrs.kneighbors(X)
 
-# A = h**2 * sym.exp(1.218 * W + 2.198)
-# Er = S / (1.167 * sym.sqrt(A))
-# E = (1-0.3**2) / (1 / Er - (1-0.0691**2) / 1143)
-# # a29 = 0.29 *Er * (-0.696 * W**2 -0.344 * W + 1) # \sigma_{0.29}+b29\sigma_y=a29
-# # b29 = 11 * 0.29 - 1 # \sigma_{0.29}=a29-b29\sigma_y 
-# # # s29 = (a29-b29*sy)
-# # Ceq = sym.Eq(C, 6.5*(a29-b29*sy)*(1+sy/(a29-b29*sy))*(-1+sym.ln(Er/sy)))
+    def make_quadratic_features(x):
+        """Generate features: [x1, ..., xn, x1^2, x1*x2, ..., xn^2]"""
+        x = x.reshape(-1, 1)
+        linear = x.flatten()
+        quad = np.array([x[i] * x[j] for i in range(n_features) for j in range(i, n_features)])
+        return np.hstack((linear, quad.flatten()))
 
-# # # C = 6.5*(a29-b29*sy)*(1+sy/(a29-b29*sy))*(-1+sym.ln(Er/sy))
-# # sy = sym.solve(Ceq, sy)
-# H = C * h**2 / A
-# alpha = 70.296 * sym.pi / 180
-# sy = 3 * H / 2 - sym.ln(sym.cot(alpha)*E*H/9)
+    for i in range(n_samples):
+        neigh_idx = indices[i][1:]  # exclude self
+        X_diff = X[neigh_idx] - X[i]  # center at current point
+        y_diff = y[neigh_idx] - y[i]
 
-# pprint(N(Er, 10))
-# pprint(N(sy, 10))
+        # Construct design matrix with linear + quadratic terms
+        X_design = np.array([make_quadratic_features(x) for x in X_diff])
+        coeffs, _, _, _ = np.linalg.lstsq(X_design, y_diff, rcond=None)
 
-# pprint(Er.diff(C))
-# pprint(Er.diff(S))
-# pprint(Er.diff(W))
-# pprint(Er.diff(h))
+        # Extract second-order coefficients and build symmetric Hessian
+        H = np.zeros((n_features, n_features))
+        idx = 0
+        for j in range(n_features):
+            for k in range(j, n_features):
+                value = coeffs[n_features + idx]
+                H[j, k] = value
+                idx += 1
 
-# pprint(sy.diff(C))
-# pprint(sy.diff(S))
-# pprint(sy.diff(W))
-# pprint(sy.diff(h))
+        hessians[i] = H
 
+    return hessians
 
+def derivatives(fname, prop, features=['C', 'S', 'W', 'h']):
+    data = FileData(fname, prop)
+    X = data.X
+    y = data.y
 
+    result = estimate_jacobian(X, y)
+    for row in result:
+        print(row)
+    for i in range(len(features)):
+        data.addprop(f'd{prop}d{features[i]}', result[:,i])
+    result = estimate_hessian(X, y)
+    for row in result:
+        print(row)
+    for i in range(len(features)):
+        for j in range(i,len(features)):
+            data.addprop(f'd2{prop}d{features[i]}d{features[j]}', result[:,i,j])
 
+fname = 'model'
+data_sy = FileData(fname, 'sy')
+data_Er = FileData(fname, 'Er')
 
-# # First set of equations with different scaling factor for Er
-C, h, W, S, HC, K1, K2, K3, K4, K5, K6, K7, K8 = sym.symbols('C, h, W, S, HC, K1, K2, K3, K4, K5, K6, K7, K8')
-# C in GPa, h in um, S in N/m. Er and sy in GPa.
-# Er = K1 * S / (K2 * W * h*1e3 - K3 * C * (K2 * W *h*1e3)**2 / S)
-Er = K1 * S / (K2 * W**K3 * h*1e3 - K4 * C * (K2*W**K3 * h*1e3)**2 / S)
-E = (1-0.3**2) / (1 / Er - (1-0.0691**2) / 1143)
-H = K5 * W**K6 * C*1e9 / 24.5
-alpha = 70.296 * sym.pi / 180
-sy = 1.5 * K7*H - sym.ln(sym.cot(alpha)*K8*E*H/9)
-
-# Partial derivative of Er
-dEr_C = Er.diff(C)
-dEr_S = Er.diff(S)
-dEr_W = Er.diff(W)
-dEr_h = Er.diff(h)
-
-# Partial derivative of sy
-dsy_C = sy.diff(C)
-dsy_S = sy.diff(S)
-dsy_W = sy.diff(W)
-dsy_h = sy.diff(h)
-
-# Print results in a more readable format
-print('Partial derivatives of Er with respect to C:')
-pprint(N(dEr_C, 10))
-print('Partial derivatives of Er with respect to S:')
-pprint(N(dEr_S, 10))
-print('Partial derivatives of Er with respect to W:')
-pprint(N(dEr_W, 10))
-print('Partial derivatives of Er with respect to h:')
-pprint(N(dEr_h, 10))
-print('Partial derivatives of sy with respect to C:')
-pprint(N(dsy_C, 10))
-print('Partial derivatives of sy with respect to S:')
-pprint(N(dsy_S, 10))
-print('Partial derivatives of sy with respect to W:')
-pprint(N(dsy_W, 10))
-print('Partial derivatives of sy with respect to h:')
-pprint(N(dsy_h, 10))
-
-print('Partial derivatives of Er with respect to C:')
-print(N(dEr_C, 3))
-print('Partial derivatives of Er with respect to S:')
-print(N(dEr_S, 3))
-print('Partial derivatives of Er with respect to W:')
-print(N(dEr_W, 3))
-print('Partial derivatives of Er with respect to h:')
-print(N(dEr_h, 3))
-print('Partial derivatives of sy with respect to C:')
-print(N(dsy_C, 3))
-print('Partial derivatives of sy with respect to S:')
-print(N(dsy_S, 3))
-print('Partial derivatives of sy with respect to W:')
-print(N(dsy_W, 3))
-print('Partial derivatives of sy with respect to h:')
-print(N(dsy_h, 3))
+derivatives(fname, 'sy')
+derivatives(fname, 'Er')
