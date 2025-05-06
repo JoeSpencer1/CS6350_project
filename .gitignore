@@ -1,7 +1,7 @@
 .DS_Store
 data/.DS_Store
 .history
-src/ouptputs/
+src/outputs/
 *.dat
 src/model
 src/__pycache__
