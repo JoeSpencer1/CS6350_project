@@ -13,3 +13,4 @@ pandas
 scipy
 scikit-learn
 pysr
+sympy
