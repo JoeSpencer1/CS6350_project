@@ -1,0 +1,82 @@
+  Best Complexity 19 | MSE = 10.93366 | Validation MSE = 11.14528 | Eqn: (-x0 + (1.0435324 - x2)*x1*0.00093924854/x3 - 1*5.3879285)/(1.2959424*(1.186366 - x2))
+  Complexity 1 | MSE = 3260.23320 | Validation MSE = 3490.09329 | Eqn: x0
+  Complexity 3 | MSE = 2154.57370 | Validation MSE = 2111.75522 | Eqn: x1**0.3770216
+  Complexity 5 | MSE = 223.91566 | Validation MSE = 225.83969 | Eqn: x1*0.00021236236/x3
+  Complexity 7 | MSE = 216.53777 | Validation MSE = 218.01372 | Eqn: x1*0.00020402492/x3 + 6.170055
+  Complexity 8 | MSE = 70.68049 | Validation MSE = 70.08155 | Eqn: 0.00018188289*x1/(sqrt(x2)*x3)
+  Complexity 9 | MSE = 53.76568 | Validation MSE = 54.02970 | Eqn: x1*(0.00033000167 + x2*(-0.00015672554))/x3
+  Complexity 10 | MSE = 49.77020 | Validation MSE = 50.39294 | Eqn: x1*(0.0003726372 + exp(x2)*(-7.5075965e-5))/x3
+  Complexity 11 | MSE = 38.08685 | Validation MSE = 39.02416 | Eqn: (1.9905806 - x2)*0.00018240332*x1/x3 - 10.2218075
+  Complexity 12 | MSE = 28.47654 | Validation MSE = 28.91499 | Eqn: -x0 + x1*(0.001087867 + exp(x2)*(-0.00034229844))/x3
+  Complexity 13 | MSE = 26.30201 | Validation MSE = 25.84595 | Eqn: -x0 + x1*(1.2467228 - x2)*0.00074526237/x3 - 1*9.337657
+  Complexity 14 | MSE = 24.44425 | Validation MSE = 24.59969 | Eqn: -x0 + (exp(x2) - 3.1806479)*x1*(-0.000348076)/x3 - 5.1111856
+  Complexity 15 | MSE = 15.57351 | Validation MSE = 16.77010 | Eqn: (-x0 + (1.2038063 - x2)*x1*0.00062371924/x3)/(x0**(-0.09388155))
+  Complexity 17 | MSE = 12.41317 | Validation MSE = 12.40581 | Eqn: (x1*0.00087603554*(1.0590351 - x2)/x3 - (x0 + 5.2934313))/(1.2958934 - x2)
+  Complexity 19 | MSE = 10.93366 | Validation MSE = 11.14528 | Eqn: (-x0 + (1.0435324 - x2)*x1*0.00093924854/x3 - 1*5.3879285)/(1.2959424*(1.186366 - x2))
+  Best Complexity 20 | MSE = 116.65524 | Validation MSE = 110.90364 | Eqn: ((x0 + (x2 + 0.09823704)**35.73774)*(x2 + 0.10464844))**1.0783021*exp((x2 + 0.0760604)**9.34649)
+  Complexity 1 | MSE = 3296.56300 | Validation MSE = 3344.81379 | Eqn: x0
+  Complexity 3 | MSE = 2184.68800 | Validation MSE = 1991.62475 | Eqn: x1**0.3773068
+  Complexity 5 | MSE = 704.21136 | Validation MSE = 702.96048 | Eqn: 165.76485**x2 + x0
+  Complexity 7 | MSE = 518.57560 | Validation MSE = 509.99902 | Eqn: 219.0872**x2 + x0 - 1*19.53245
+  Complexity 8 | MSE = 304.27167 | Validation MSE = 301.48878 | Eqn: x0*exp((x2 + 0.12328946)**8.214364)
+  Complexity 9 | MSE = 289.60873 | Validation MSE = 298.09108 | Eqn: (x2*(90.41588**x2 + x0))**1.0989231
+  Complexity 10 | MSE = 211.65044 | Validation MSE = 217.03250 | Eqn: (x0 + 95.69685)*exp(x2**3.9562464) - 123.65708
+  Complexity 12 | MSE = 166.62082 | Validation MSE = 167.17962 | Eqn: (x0 + 30.226482)*exp((x2 + 0.09734615)**5.584337) - 50.815216
+  Complexity 13 | MSE = 152.97150 | Validation MSE = 148.51568 | Eqn: (x2*(x0 + 25.613485)*(x2**14.212944 + 0.3966557))**1.3531419
+  Complexity 14 | MSE = 140.66602 | Validation MSE = 135.73247 | Eqn: (x2*(x0 + 7.8291054))**1.1115354*exp((x2 + 0.06881335)**12.660353)
+  Complexity 15 | MSE = 140.37220 | Validation MSE = 135.49641 | Eqn: (x2*(x0 + 7.698774))**1.1113825*sqrt(exp((x2 + 0.12260358)**13.287003))
+  Complexity 16 | MSE = 131.01918 | Validation MSE = 125.70462 | Eqn: ((x0*x2)**1.1187961 + 24.930866)*exp((x2 + 0.060164228)**11.255953) - 1*22.5962
+  Complexity 17 | MSE = 130.84558 | Validation MSE = 125.47473 | Eqn: ((x0*x2)**1.1188446 + 25.169538)*sqrt(exp((x2 + 0.11939035)**12.003988)) - 22.810043
+  Complexity 18 | MSE = 118.82271 | Validation MSE = 112.47575 | Eqn: x2*(x0 + (x2 + 0.096227)**35.76313)**1.1062032*exp((x2 + 0.076924145)**9.881256)
+  Complexity 19 | MSE = 117.85838 | Validation MSE = 111.82132 | Eqn: x2*(x0 + exp((x2 + 0.09106142)**14.344297))**1.105159*exp((x2 + 0.07443722)**9.940811)
+  Complexity 20 | MSE = 116.65524 | Validation MSE = 110.90364 | Eqn: ((x0 + (x2 + 0.09823704)**35.73774)*(x2 + 0.10464844))**1.0783021*exp((x2 + 0.0760604)**9.34649)
+  Best Complexity 20 | MSE = 26.61881 | Validation MSE = 23.77204 | Eqn: (1.2478191 - x2)*x1*0.00074361986/x3 - x8 + (-(x0 + x2) - 8.607691)*exp(x9)
+  Complexity 1 | MSE = 3358.05740 | Validation MSE = 3098.90605 | Eqn: x0
+  Complexity 3 | MSE = 2115.78030 | Validation MSE = 2266.71694 | Eqn: x1**0.3770913
+  Complexity 5 | MSE = 227.67914 | Validation MSE = 210.80094 | Eqn: x1*0.0002119942/x3
+  Complexity 7 | MSE = 219.35938 | Validation MSE = 206.85250 | Eqn: x1*0.00020324977/x3 + 6.5215273
+  Complexity 8 | MSE = 70.77762 | Validation MSE = 69.69875 | Eqn: 0.00018185675*x1/(sqrt(x2)*x3)
+  Complexity 9 | MSE = 54.02745 | Validation MSE = 52.98388 | Eqn: (2.1029103 - x2)*x1*0.00015703843/x3
+  Complexity 10 | MSE = 51.06834 | Validation MSE = 49.79029 | Eqn: 0.000310459474492146*x1*sqrt(1 - 0.703403311411769*x2)/x3
+  Complexity 11 | MSE = 38.81331 | Validation MSE = 36.13187 | Eqn: (1.989119 - x2)*x1*0.00018239103/x3 - 10.043645
+  Complexity 12 | MSE = 37.45055 | Validation MSE = 34.57954 | Eqn: 0.000335398766871187*x1*sqrt(1 - 0.726738006660845*x2)/x3 - 9.357503
+  Complexity 13 | MSE = 26.78548 | Validation MSE = 23.92827 | Eqn: -x0 + x1*(1.2467448 - x2)*0.00074475235/x3 - 9.156781
+  Complexity 15 | MSE = 26.63066 | Validation MSE = 23.78392 | Eqn: x1*(1.2478191 - x2)*0.0007436078/x3 - (x0 + x2) - 8.607691
+  Complexity 17 | MSE = 26.62313 | Validation MSE = 23.56616 | Eqn: x1*0.0007619576*(1.2433811 - x2)/x3 + (-(x0 + x2) - 8.660705)*1.0349286
+  Complexity 18 | MSE = 26.62181 | Validation MSE = 23.78397 | Eqn: x1*0.0007436119*(1.2478106 - x2)/x3 + (-(x0 + x2) - 8.602217)*exp(x9)
+  Complexity 20 | MSE = 26.61881 | Validation MSE = 23.77204 | Eqn: (1.2478191 - x2)*x1*0.00074361986/x3 - x8 + (-(x0 + x2) - 8.607691)*exp(x9)
+  Best Complexity 20 | MSE = 9.35377 | Validation MSE = 10.26441 | Eqn: sqrt(x0) - 1.9593967*x0 + x1*(x2*(4.2665602e-7*x0 - 0.001173368) + 0.0013297925)/x3
+  Complexity 1 | MSE = 3313.97390 | Validation MSE = 3275.16781 | Eqn: x0
+  Complexity 3 | MSE = 2129.25270 | Validation MSE = 2212.97284 | Eqn: x1**0.37704954
+  Complexity 5 | MSE = 222.98154 | Validation MSE = 229.63846 | Eqn: x1*0.0002119437/x3
+  Complexity 7 | MSE = 207.94365 | Validation MSE = 213.48076 | Eqn: (x1/x3)**0.9141052*0.0006804371
+  Complexity 8 | MSE = 69.96199 | Validation MSE = 72.98349 | Eqn: 0.00018180834*x1/(sqrt(x2)*x3)
+  Complexity 9 | MSE = 53.20201 | Validation MSE = 56.31686 | Eqn: x1*(0.00033004634 + x2*(-0.00015691479))/x3
+  Complexity 10 | MSE = 48.66549 | Validation MSE = 52.25657 | Eqn: (x1*0.0004778847/x3 - 1*23.374033)/exp(x2)
+  Complexity 11 | MSE = 37.69903 | Validation MSE = 40.60352 | Eqn: x1*(0.00036307058 + x2*(-0.00018256732))/x3 - 1*10.210713
+  Complexity 12 | MSE = 28.21911 | Validation MSE = 29.96056 | Eqn: -x0 + x1*(0.0010882596 + exp(x2)*(-0.0003424998))/x3
+  Complexity 13 | MSE = 25.93683 | Validation MSE = 27.30732 | Eqn: -x0 + x1*(0.00092927174 + x2*(-0.00074524037))/x3 - 9.428487
+  Complexity 14 | MSE = 24.11864 | Validation MSE = 25.92013 | Eqn: -x0 + x1*(0.0011077432 + exp(x2)*(-0.0003483565))/x3 - 5.1788116
+  Complexity 15 | MSE = 15.18518 | Validation MSE = 16.33663 | Eqn: -x0 + x1*(x2*(x0*3.0360331e-7 - 0.00068695773) + 0.0008489248)/x3
+  Complexity 17 | MSE = 10.64329 | Validation MSE = 11.89898 | Eqn: -x0**1.1004016 + x1*(x0*4.5372968e-7 + x2*(-0.0009771244) + 0.001129899)/x3
+  Complexity 19 | MSE = 9.77907 | Validation MSE = 10.56980 | Eqn: x0*(-1.8844212) + x1*(x2*(x0*4.2666053e-7 - 0.0011611303) + 0.0013173196)/x3 + 4.452481
+  Complexity 20 | MSE = 9.35377 | Validation MSE = 10.26441 | Eqn: sqrt(x0) - 1.9593967*x0 + x1*(x2*(4.2665602e-7*x0 - 0.001173368) + 0.0013297925)/x3
+  Best Complexity 20 | MSE = 107.83612 | Validation MSE = 106.86059 | Eqn: (0.24441579 - 0.14786462/log(x2))*(-1.51940684423194*x4 + 11.3609423491101*(0.11600466477958*x0 - 0.11600466477958*x3 + 1)**1.1281525) - 5.6119003
+  Complexity 1 | MSE = 3302.24900 | Validation MSE = 3322.08732 | Eqn: x0
+  Complexity 3 | MSE = 2145.38130 | Validation MSE = 2148.36869 | Eqn: x1**0.37718648
+  Complexity 5 | MSE = 706.10913 | Validation MSE = 695.43345 | Eqn: 166.37471**x2 + x0
+  Complexity 7 | MSE = 250.24232 | Validation MSE = 264.87607 | Eqn: x0*(-0.4105958)/(x2 - 1.023863)
+  Complexity 8 | MSE = 146.31871 | Validation MSE = 151.45289 | Eqn: x0*(0.46066624 - 0.2870346/log(x2))
+  Complexity 9 | MSE = 123.86919 | Validation MSE = 118.71554 | Eqn: x0*(-0.39695686/(x2 - 0.98850715))**0.7595506
+  Complexity 11 | MSE = 117.96352 | Validation MSE = 117.21878 | Eqn: x0*(-1*(-0.4245497) - 0.26880148/(x2 - 0.99288315)) - 10.155784
+  Complexity 12 | MSE = 111.75346 | Validation MSE = 113.26207 | Eqn: 13.9100049694768*(0.14743309 - 0.107716314/log(x2))*(0.110779474291574*x0 + 1)**1.1965239
+  Complexity 14 | MSE = 109.86324 | Validation MSE = 111.43368 | Eqn: 9.54246951362416*(0.26219806 - 0.1560124/log(x2))*(0.132990483865927*x0 + 1)**1.1181052 - 7.2138286
+  Complexity 15 | MSE = 109.57630 | Validation MSE = 108.30025 | Eqn: (x0 + 3.656677)*((-0.31992286/(x2 - 0.99374574))**0.863047 - 1*(-0.2670748)) - 13.953702
+  Complexity 16 | MSE = 108.59167 | Validation MSE = 108.10539 | Eqn: (0.2531322 - 0.15241556/log(x2))*(-x4 + 9.68019206250637*(0.132343860052191*x0 + 1)**1.122496) - 6.0024467
+  Complexity 18 | MSE = 108.06490 | Validation MSE = 107.84651 | Eqn: (0.27876323 - 0.1625949/log(x2))*(-x4 + 10.0361185209199*(0.124905368570137*x0 - 0.124905368570137*x3 + 1)**1.1086394) - 6.9317856
+  Complexity 20 | MSE = 107.83612 | Validation MSE = 106.86059 | Eqn: (0.24441579 - 0.14786462/log(x2))*(-1.51940684423194*x4 + 11.3609423491101*(0.11600466477958*x0 - 0.11600466477958*x3 + 1)**1.1281525) - 5.6119003
+
+=== Summary ===
+Best MSE       = 9.35377
+Best Equation  = sqrt(x0) - 1.9593967*x0 + x1*(x2*(4.2665602e-7*x0 - 0.001173368) + 0.0013297925)/x3
+Held-out MSE   = 10.48439

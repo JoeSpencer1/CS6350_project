@@ -5,3 +5,6 @@ src/outputs/
 *.dat
 src/model
 src/__pycache__
+moose/*.e
+moose/mesh/*.e
+moose/*.csv

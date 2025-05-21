@@ -1,0 +1,60 @@
+reset
+
+create vertex 0 2 0
+create vertex 4 2 0
+create vertex 4 1.4325243545329642 0
+create vertex 0 0 0
+create curve vertex 1 2
+create curve vertex 2 3
+create curve vertex 3 4
+create curve vertex 4 1
+create surface curve 1 2 3 4
+
+sideset 1 curve 1 # Indenter top
+sideset 2 curve 3 # Indenter bottom
+sideset 3 curve 4 # Indenter left
+
+surface 1 size 0.3
+curve 4 interval 3
+curve 3 size 0.2
+create block 1
+block 1 add surface 1
+#surface 1 scheme trimesh
+
+surface 1 scheme pave
+mesh surface 1 smooth
+block 1 element type quad8
+
+create vertex 0 0 0
+create vertex 4 0 0
+create vertex 4 -4 0 
+create vertex 0 -4 0 
+create curve vertex 9 10 
+create curve vertex 10 11
+create curve vertex 11 12
+create curve vertex 12 9
+create surface curve 5 6 7 8
+
+webcut surface 2 plane xplane offset 2.4
+webcut surface all plane yplane offset -2.4
+merge volume 5 4 3 2 
+
+sideset 4 curve 10 14 # Substrate top
+sideset 5 curve 20 16 # Substrate right
+sideset 6 curve 13 11 # Substrate bottom
+sideset 7 curve 25 23 # Substrate left
+
+surface 6 7 5 size 0.3
+surface 8 size 0.07 #That gives a size of 0.15 for some reason
+create block 2
+block 2 add surface 8 6 7 5
+#surface 2 scheme trimesh
+
+move volume 1 x 0 y 1 z 0
+mesh surface 8 6 7 5
+#refine vertex 12 radius 0.5 numsplit 3
+move volume 1 x 0 y -1 z 0
+block 2 element type quad8
+export genesis "~/GitHub/PINN_indentation/moose/mesh/2D_r0_00.e" dimension 3 overwrite
+
+quality surface 1
