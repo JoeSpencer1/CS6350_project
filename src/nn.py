@@ -655,6 +655,452 @@ def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
 
     return(np.mean(np.mean(y, axis=0), axis=0), np.mean(np.std(y, axis=0), axis=0))
 
+
+
+
+
+
+
+
+
+import os
+
+# Must be set before importing DeepXDE.
+os.environ["DDE_BACKEND"] = "pytorch"
+
+import numpy as np
+import deepxde as dde
+from sklearn.model_selection import ShuffleSplit
+
+
+def sobolev_one(
+    yname,
+    testname,
+    trainname,
+    n_hi,
+    n_vd=0.2,
+    lay=2,
+    wid=32,
+    n_splits=10,
+    epochs=30000,
+    h_star=0.0,
+    constraint_factor=3.0,
+):
+
+    # ==========================================================
+    # 1. LOAD DATA
+    # ==========================================================
+
+    model_data = FileData("model", yname)
+    datatrain = FileData(trainname, yname)
+    datatest = FileData(testname, yname)
+
+    X_model = np.asarray(model_data.X, dtype=np.float32).copy()
+    Y_model = np.asarray(model_data.y, dtype=np.float32).copy()
+
+    X_train_all = np.asarray(datatrain.X, dtype=np.float32).copy()
+    Y_train_all = np.asarray(datatrain.y, dtype=np.float32).copy()
+
+    X_test_all = np.asarray(datatest.X, dtype=np.float32).copy()
+    Y_test_all = np.asarray(datatest.y, dtype=np.float32).copy()
+
+    for name, X, Y in [
+        ("model", X_model, Y_model),
+        ("train", X_train_all, Y_train_all),
+        ("test", X_test_all, Y_test_all),
+    ]:
+        if X.ndim != 2 or X.shape[1] != 4:
+            raise ValueError(f"{name}: X must have shape (N, 4)")
+        if Y.ndim != 2 or Y.shape != (len(X), 2):
+            raise ValueError(f"{name}: y must have shape (N, 2)")
+
+    # ==========================================================
+    # 2. NORMALIZATION
+    # ==========================================================
+
+    # Fixed input normalization for the entire experiment.
+    # Fit on the training pool, not on the held-out test set.
+    X_ref = np.vstack([X_model, X_train_all])
+
+    X_min = np.min(X_ref, axis=0)
+    X_max = np.max(X_ref, axis=0)
+
+    X_range = (X_max - X_min) / 2
+    X_center = (X_max + X_min) / 2
+
+    if np.any(X_range <= 0):
+        raise ValueError("An input has zero range.")
+
+    # Outputs are normalized separately.
+    Y_ref = np.vstack([Y_model, Y_train_all])
+
+    Y_min = np.min(Y_ref, axis=0)
+    Y_max = np.max(Y_ref, axis=0)
+
+    Y_range = (Y_max - Y_min) / 2
+    Y_center = (Y_max + Y_min) / 2
+
+    if np.any(Y_range <= 0):
+        raise ValueError("An output has zero range.")
+
+    def normalize_X(X):
+        return ((X - X_center) / X_range).astype(np.float32)
+
+    def normalize_Y(Y):
+        return ((Y - Y_center) / Y_range).astype(np.float32)
+
+    def denormalize_Y(Y):
+        return Y * Y_range + Y_center
+
+    X_model_n = normalize_X(X_model)
+    X_train_all_n = normalize_X(X_train_all)
+    X_test_all_n = normalize_X(X_test_all)
+
+    Y_model_n = normalize_Y(Y_model)
+    Y_train_all_n = normalize_Y(Y_train_all)
+
+    # Extract normalization constants.
+    Cr, Sr, Wr, hr = X_range
+    Ca, Sa, Wa, ha = X_center
+
+    Er_r, sy_r = Y_range
+    Er_a, sy_a = Y_center
+
+    print("Model length:", len(X_model))
+    print("Input ranges:", X_min, X_max)
+    print("Output ranges:", Y_min, Y_max)
+
+    # ==========================================================
+    # 3. PHYSICS PARAMETERS
+    # ==========================================================
+
+    beta = 1.034
+    epsilon = 0.75
+    area_constant = 24.5
+
+    # Cheng-Cheng parameters.
+    theta = np.deg2rad(70.3)
+    gamma = 0.27
+
+    lam = 1.50 * np.tan(theta) + 0.327
+    kappa = 1.0 / (lam * (1.0 + gamma))
+
+    # Physical residual scale.
+    H_scale = max(float(sy_r), 1e-8)
+
+    # ==========================================================
+    # 4. PHYSICS / SOBOLEV RESIDUALS
+    # ==========================================================
+
+    def pde(x, y):
+
+        # Recover physical inputs.
+        C = x[:, 0:1] * Cr + Ca
+        S = x[:, 1:2] * Sr + Sa
+        W = x[:, 2:3] * Wr + Wa
+        h = x[:, 3:4] * hr + ha
+
+        # Recover physical outputs.
+        Er = y[:, 0:1] * Er_r + Er_a
+        sy = y[:, 1:2] * sy_r + sy_a
+
+        # ------------------------------------------------------
+        # Oliver-Pharr
+        # ------------------------------------------------------
+
+        hc = h - epsilon * C * h**2 / S
+
+        Er_OP = (
+            np.sqrt(np.pi)
+            * S
+            / (2 * beta * np.sqrt(area_constant) * hc)
+        )
+
+        Er_OP_n = (Er_OP - Er_a) / Er_r
+
+        R_OP = y[:, 0:1] - Er_OP_n
+
+        # ------------------------------------------------------
+        # Hardness
+        # ------------------------------------------------------
+
+        Pmax = C * h**2
+        Ac = area_constant * hc**2
+
+        H = Pmax / Ac
+
+        # ------------------------------------------------------
+        # Cheng-Cheng
+        # ------------------------------------------------------
+
+        R_CC = H / Er - kappa * (1 - W)
+
+        # ------------------------------------------------------
+        # Nix-Gao
+        # ------------------------------------------------------
+
+        H_NG = (
+            constraint_factor
+            * sy
+            * (1 + h_star / h)**0.5
+        )
+
+        R_NG = (H - H_NG) / H_scale
+
+        # ------------------------------------------------------
+        # Sobolev derivatives
+        # ------------------------------------------------------
+
+        dEr_dC = dde.grad.jacobian(y, x, i=0, j=0)
+        dEr_dS = dde.grad.jacobian(y, x, i=0, j=1)
+        dEr_dh = dde.grad.jacobian(y, x, i=0, j=3)
+
+        dOP_dC = dde.grad.jacobian(
+            Er_OP_n, x, i=0, j=0
+        )
+
+        dOP_dS = dde.grad.jacobian(
+            Er_OP_n, x, i=0, j=1
+        )
+
+        dOP_dh = dde.grad.jacobian(
+            Er_OP_n, x, i=0, j=3
+        )
+
+        R_dC = dEr_dC - dOP_dC
+        R_dS = dEr_dS - dOP_dS
+        R_dh = dEr_dh - dOP_dh
+
+        return [
+            R_OP,
+            R_CC,
+            R_NG,
+            R_dC,
+            R_dS,
+            R_dh,
+        ]
+
+    # ==========================================================
+    # 5. CROSS VALIDATION
+    # ==========================================================
+
+    if n_hi == 0:
+        train_size = 10
+    else:
+        train_size = n_hi
+
+    if train_size >= len(X_train_all_n):
+        raise ValueError("n_hi must be smaller than training pool.")
+
+    kf = ShuffleSplit(
+        n_splits=n_splits,
+        train_size=train_size,
+        test_size=n_vd,
+        random_state=0,
+    )
+
+    mape_Er = []
+    mape_sy = []
+    predictions = []
+
+    # ==========================================================
+    # 6. TRAINING LOOP
+    # ==========================================================
+
+    for iteration, (train_index, test_index) in enumerate(
+        kf.split(X_train_all_n), start=1
+    ):
+
+        print(f"\nIteration {iteration}/{n_splits}")
+
+        X_train = X_train_all_n[train_index]
+        Y_train = Y_train_all_n[train_index]
+
+        # Evaluate on the independent test dataset.
+        X_test = X_test_all_n
+        Y_test = Y_test_all
+
+        # Random FEM subset.
+        rng = np.random.default_rng(iteration)
+
+        model_indices = rng.choice(
+            len(X_model_n),
+            size=min(40, len(X_model_n)),
+            replace=False,
+        )
+
+        X_fem = X_model_n[model_indices]
+        Y_fem = Y_model_n[model_indices]
+
+        # ------------------------------------------------------
+        # Data constraints
+        # ------------------------------------------------------
+
+        fem_Er = dde.icbc.PointSetBC(
+            X_fem,
+            Y_fem[:, 0:1],
+            component=0,
+        )
+
+        fem_sy = dde.icbc.PointSetBC(
+            X_fem,
+            Y_fem[:, 1:2],
+            component=1,
+        )
+
+        train_Er = dde.icbc.PointSetBC(
+            X_train,
+            Y_train[:, 0:1],
+            component=0,
+        )
+
+        train_sy = dde.icbc.PointSetBC(
+            X_train,
+            Y_train[:, 1:2],
+            component=1,
+        )
+
+        # ------------------------------------------------------
+        # Physics points
+        # ------------------------------------------------------
+
+        # Use measured/FEM observations instead of randomly
+        # sampling potentially nonphysical input combinations.
+        X_physics = np.vstack([X_fem, X_train])
+
+        geom = dde.geometry.Hypercube(
+            [-1, -1, -1, -1],
+            [1, 1, 1, 1],
+        )
+
+        data = dde.data.PDE(
+            geom,
+            pde,
+            [fem_Er, fem_sy, train_Er, train_sy],
+            num_domain=0,
+            num_boundary=0,
+            anchors=X_physics,
+        )
+
+        # ------------------------------------------------------
+        # Neural network
+        # ------------------------------------------------------
+
+        layer_size = [4] + [wid] * lay + [2]
+
+        net = dde.nn.FNN(
+            layer_size,
+            "tanh",
+            "Glorot uniform",
+        )
+
+        model = dde.Model(data, net)
+
+        # ------------------------------------------------------
+        # Loss weights
+        # ------------------------------------------------------
+
+        loss_weights = [
+            0.1,    # Oliver-Pharr
+            0.1,    # Cheng-Cheng
+            0.0,    # Nix-Gao (disabled initially)
+            0.01,   # Sobolev dEr/dC
+            0.01,   # Sobolev dEr/dS
+            0.01,   # Sobolev dEr/dh
+            1.0,    # FEM Er
+            1.0,    # FEM sy
+            10.0,   # Experimental Er
+            10.0,   # Experimental sy
+        ]
+
+        model.compile(
+            "adam",
+            lr=0.001,
+            loss_weights=loss_weights,
+        )
+
+        model.train(
+            iterations=epochs,
+            disregard_previous_best=True,
+        )
+
+        # ------------------------------------------------------
+        # Predictions
+        # ------------------------------------------------------
+
+        Y_pred_n = model.predict(X_test)
+
+        Y_pred = denormalize_Y(Y_pred_n)
+
+        predictions.append(Y_pred)
+
+        # Physical-unit percentage errors.
+        eps = 1e-12
+
+        error_Er = np.mean(
+            np.abs(
+                (Y_test[:, 0] - Y_pred[:, 0])
+                / np.maximum(np.abs(Y_test[:, 0]), eps)
+            )
+        ) * 100
+
+        error_sy = np.mean(
+            np.abs(
+                (Y_test[:, 1] - Y_pred[:, 1])
+                / np.maximum(np.abs(Y_test[:, 1]), eps)
+            )
+        ) * 100
+
+        mape_Er.append(error_Er)
+        mape_sy.append(error_sy)
+
+        print(f"Er MAPE: {error_Er:.3f}%")
+        print(f"sy MAPE: {error_sy:.3f}%")
+
+    # ==========================================================
+    # 7. RESULTS
+    # ==========================================================
+
+    print("\nFinal results")
+    print(
+        f"Er MAPE: {np.mean(mape_Er):.3f} "
+        f"+/- {np.std(mape_Er):.3f}%"
+    )
+    print(
+        f"sy MAPE: {np.mean(mape_sy):.3f} "
+        f"+/- {np.std(mape_sy):.3f}%"
+    )
+
+    with open("output.txt", "a") as f:
+        f.write(
+            f"sobolev_one {trainname} {testname} "
+            f"{n_hi} {n_vd} {lay} {wid} "
+            f"Er={np.mean(mape_Er):.4f} "
+            f"sy={np.mean(mape_sy):.4f}\n"
+        )
+
+    return {
+        "Er_mape": mape_Er,
+        "sy_mape": mape_sy,
+        "predictions": predictions,
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def main(argument=None):
     if argument != None:
         exec(argument)

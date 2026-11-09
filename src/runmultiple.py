@@ -23,11 +23,12 @@ def run_processes(arguments):
 
 if __name__ == '__main__':
     run_processes(np.array([
+        "sobolev_one('Er sy', ('model'), ('model'), 500)",
         # "pinn_one('Er', ('model'), ('model'), 500)",
         # "pinn_one('Er', ('model'), ('model'), 500)",
         # "pinn_one('Er', ('model'), ('model'), 500)",
         # "kan_one('sy', ('model'), ('model'), 500)",
-        "pinn_one('Er', ('model'), ('model'), 500)",
+        # "pinn_one('Er', ('model'), ('model'), 500)",
         # "pinn_one('Er', ('model'), ('model'), 500)",
         # "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 0)",
         # "pinn_one('Er', ('Al7075', 'Al6061'), ('Ti-6Al-4V'), 5)",

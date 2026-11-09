@@ -85,6 +85,11 @@ class FileData(object):
                 self.y = df['s0.033 (GPa)'].values[:, None]
             else:
                 self.y = np.vstack((self.y, df['s0.033 (GPa)'].values[:, None]))
+        elif self.yname == 'Er sy':
+            if self.y is None:
+                self.y = df[['Er (GPa)', 'sy (GPa)']].values
+            else:
+                self.y = np.vstack((self.y, df[['Er (GPa)', 'sy (GPa)']].values))
 
     def addprop(self, column_name, values):
         if type(self.filename) is tuple:
