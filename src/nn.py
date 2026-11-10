@@ -7,13 +7,13 @@ from sklearn.svm import SVR
 from sklearn.model_selection import KFold, LeaveOneOut, RepeatedKFold, ShuffleSplit, StratifiedKFold
 import kan
 import os
-os.environ['DDEBACKEND'] = 'tensorflow.compat.v1'
+os.environ['DDEBACKEND'] = 'paddle'
 import deepxde as dde
 from data import FileData
 import tensorflow as tf
 tf.config.run_functions_eagerly(False)
-dde.backend.set_default_backend('tensorflow.compat.v1')
-dde.backend.tf.Session()
+dde.backend.set_default_backend('paddle')
+# dde.backend.tf.Session()
 import torch
 import torch.nn as tnn
 import torch.optim as optim
@@ -666,7 +666,7 @@ def find_properties(yname, expname, train_hi, train_lo, lay=2, wid=128):
 import os
 
 # Must be set before importing DeepXDE.
-os.environ["DDE_BACKEND"] = "pytorch"
+os.environ["DDE_BACKEND"] = "paddle"
 
 import numpy as np
 import deepxde as dde
