@@ -811,10 +811,10 @@ def sobolev_one(
         hc = h - epsilon * C * h**2 / S
 
         Er_OP = (
-            np.sqrt(np.pi)
+            1e-3 * np.sqrt(np.pi)
             * S
             / (2 * beta * np.sqrt(area_constant) * hc)
-        )
+        ) # (N/m)/(um)^2=1e3 GPa
 
         Er_OP_n = (Er_OP - Er_a) / Er_r
 
@@ -827,7 +827,7 @@ def sobolev_one(
         Pmax = C * h**2
         Ac = area_constant * hc**2
 
-        H = Pmax / Ac
+        H = Pmax / Ac # GPa*um^2/um^2=GPa
 
         # ------------------------------------------------------
         # Cheng-Cheng
