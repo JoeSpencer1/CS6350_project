@@ -835,5 +835,9 @@ pinn_one Er 60.26169512332465 7.342306523622182 model model 500 0.2 2 32
 
 
 
+<<<<<<< HEAD
 
+=======
+sobolev_one model model 500 0.2 2 32 Er=20.7862 sy=16.5513
+>>>>>>> 0dec3d29e087c8539a3bd8b33b48f765b27048ce
 
